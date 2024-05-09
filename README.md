@@ -31,13 +31,13 @@ Students will be able to ask questions or post anonymously.
 ### Main features that application will have on completion
 The main functionality of this application to solve the problems are consists of the following
 features:
-⋅⋅* Sorting newest/oldest posts etc (store timestamp of publication) This will check lot of
+- Sorting newest/oldest posts etc (store timestamp of publication) This will check lot of
 queries due to being able to sort by numerous ways, by friends, by timestamps, (by
 tags: I want to see dog related posts)? Will require a lot of joining tables and so on.
-⋅⋅* Create and manage discussion threads as well as posts which can be liked by users
-⋅⋅* Anonymous discussions/questions.
-⋅⋅* Student discussions, events, what is currently happening at school, questions
+- Create and manage discussion threads as well as posts which can be liked by users
+- Anonymous discussions/questions.
+- Student discussions, events, what is currently happening at school, questions
 etc.
-⋅⋅* reate events that people can join
+- Create events that people can join
 The source of the data is generated and collected by users during usage which will populate
 the database.
