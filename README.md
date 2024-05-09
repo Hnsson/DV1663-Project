@@ -38,6 +38,7 @@ tags: I want to see dog related posts)? Will require a lot of joining tables and
 - Anonymous discussions/questions.
 - Student discussions, events, what is currently happening at school, questions
 etc.
-- Create events that people can join
+- Create events that people can join.
+
 The source of the data is generated and collected by users during usage which will populate
 the database.
