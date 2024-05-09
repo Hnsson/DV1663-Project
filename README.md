@@ -1,6 +1,13 @@
 # DV1663-Project
 ###### Group 21: Arturs Bitenbinders, Emil Hansson
 
+## Installation Instructions
+To install the project dependencies, run the following command:
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Introduction
 A social media web application that is accessed through SSO api. The posts are associated with the id retrieved through the API. The Users can read, write, update, and delete.
 
