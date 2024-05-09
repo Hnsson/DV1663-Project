@@ -13,6 +13,9 @@ And then to start the Flask web server, run the following command:
 py server.py
 ```
 
+And then access the website at:
+> http://localhost:8080
+
 ## Introduction
 A social media web application that is accessed through SSO api. The posts are associated with the id retrieved through the API. The Users can read, write, update, and delete.
 
