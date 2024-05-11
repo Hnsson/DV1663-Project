@@ -1,0 +1,33 @@
+<!-- user.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile: {{ user.user_id }}</title>
+
+    <link rel="stylesheet" href="/css/components/post.css">
+    <link rel="stylesheet" href="/css/users/user.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+</head>
+<body>
+    {% include 'components/navbar.html' %}
+
+    <div class="banner">
+        <span>
+            <h1>{{ user.name }}</h1>
+            <p>{{ user.age }} years old</p>
+        </span>
+        <p>@{{ user.username }}</p>
+    </div>
+
+    <h2>Posts</h2>
+    <div class="posts">
+        {% for post in posts %}
+            <a href="/user/{{ user.username }}/post/{{ post.post_id }}">
+                {% include 'components/post.html' %}
+            </a>
+        {% endfor %}
+    </div>
+</body>
+</html>

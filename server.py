@@ -8,7 +8,8 @@ app = Flask(__name__, template_folder='web/templates')
 init_db(app)
 
 
-# GET REQUESTS
+# === GET Requests ===
+
 @app.route('/', methods=['GET'])
 def hello_world():
     return send_from_directory('web/static', "index.html")
@@ -17,13 +18,56 @@ def hello_world():
 def get_users():
     return render_template('users/users.html', users=query_db('SELECT * FROM users'))
 
+# Get post from user
+@app.route('/user/<username>/post/<int:post_id>', methods=['GET'])
+def get_user_post(username, post_id):
+    post = query_db('SELECT * FROM posts WHERE post_id = ?', [post_id], one=True)
+    if post is None:
+        abort(404)
+    
+    comments = query_db('SELECT * FROM comments WHERE post_id = ?', [post_id])
+
+    return render_template('posts/post.html', post=post, comments=comments, username=username)
+
+# Get specific user page
 @app.route('/user/<username>', methods=['GET'])
 def get_user(username):
     user = query_db('SELECT * FROM users WHERE username = ?', [username], one=True)
     if user is None:
-        return "No such user"
+        abort(404)
+    # Query posts for the user from the database
+    posts = query_db('SELECT * FROM posts WHERE user_id = ?', [user['user_id']])
+    
+    return render_template('users/user.html', user=user, posts=posts)
 
-    return username + ', age ' + str(user['age'])
+@app.route('/search', methods=['GET'])
+def search():
+    search_query = request.args.get('q');
+
+    print(search_query);
+    # Check if query contains '@' symbol for username search instead of name search
+    if search_query[0] == '@':
+        # Search by username
+        search_query = search_query[1:];
+        print(search_query);
+        user = query_db('SELECT * FROM users WHERE username = ?', [search_query], one=True)
+
+        return render_template('search/search_results.html', users=[user] if user else [])
+    else:
+        # Search by name (matching partial names)
+        users = query_db("SELECT * FROM users WHERE name LIKE ? OR username LIKE ?", [f'%{search_query}%', f'%{search_query}%'])
+        
+        return render_template('search/search_results.html', users=users if users else [])
+
+# === POST Requests ===
+
+@app.route('/create-post', methods=['POST'])
+def create_post():
+    pass;
+
+@app.route('/post/<post_id>/create-comment', methods=['POST'])
+def create_comment(post_id):
+    pass;
 
 
 
@@ -32,8 +76,7 @@ def get_user(username):
 
 
 
-
-# POST REQUESTS
+# === TEMPORARY Test ===
 @app.route('/create-random-user', methods=['POST'])
 def create_random_user():
     try:
@@ -66,17 +109,14 @@ def delete_user(user_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# This will handle all 404 errors
-@app.errorhandler(404)
-def page_not_found(error):
-    print(error);
-    return render_template('error/error.html', title='404 - Page not found.', code=404, message=error), 404
 
 
 
 
 
-# Helper functions
+
+# === Helper Functions ===
+
 def generate_random_user():
     # List of random names
     names = ['Alice', 'Bob', 'Charlie', 'David', 'Emma', 'Frank', 'Grace', 'Henry', 'Ivy', 'Jack']
@@ -90,8 +130,7 @@ def generate_random_user():
     return username, password, name, age
 
 
-
-
+# === DEFAULT Routing ===
 
 # Route to serve the static HTML file
 @app.route('/<path:filename>', methods=['GET'])
@@ -103,6 +142,13 @@ def serve_static_html(filename):
 def serve_css(filename):
     return send_from_directory('web/css', filename)
 
+
+# === ERROR Handling ===
+
+@app.errorhandler(404)
+def page_not_found(error):
+    print(error);
+    return render_template('error/error.html', title='404 - Page not found.', code=404, message=error), 404
 
 
 
