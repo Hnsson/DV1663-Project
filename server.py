@@ -1,18 +1,63 @@
-from flask import Flask, render_template, request, abort, jsonify, send_from_directory
+from flask import Flask, render_template, request, abort, jsonify, send_from_directory, redirect, session, url_for
+from msal import ConfidentialClientApplication
+import os
+import uuid
+
+# MSAL Configurations
+CLIENT_ID = '0e3eed48-d269-4631-989f-5b25f0f0c54b'
+CLIENT_SECRET = 'f7d9652b-a97f-4db4-b2bd-aba6ed181c58'
+AUTHORITY = 'https://login.microsoftonline.com/fc13d152-2331-488a-bda5-b8a82c098338'
+REDIRECT_PATH = '/getAToken'
+SCOPE = ["User.Read", "email"]
+SESSION_TYPE = "filesystem"  # Ensures that the session is stored on the server-side
+
 from database import query_db, init_db
 
 import random
 import bcrypt
 
 app = Flask(__name__, template_folder='web/templates')
+app.secret_key = os.urandom(24)  # You can also use a more permanent secret key
+app.config['SESSION_TYPE'] = SESSION_TYPE
+
+msal_app = ConfidentialClientApplication(
+    CLIENT_ID, authority=AUTHORITY, client_credential=CLIENT_SECRET
+)
+
 init_db(app)
+
+@app.route('/login')
+def login():
+    state = str(uuid.uuid4())  # Generate a new state value for each authentication request
+    auth_url = msal_app.get_authorization_request_url(SCOPE, state=state, redirect_uri="http://localhost:8080/getAToken")
+    session['state'] = state  # Store state in session for later validation
+    return redirect(auth_url)
+
+@app.route('/getAToken')
+def authorized():
+    # Check the state returned to ensure this request is not a result of a CSRF attack
+    if request.args.get('state') != session.get("state"):
+        return "State mismatch error", 400
+    code = request.args.get('code')
+    result = msal_app.acquire_token_by_authorization_code(code, scopes=SCOPE, redirect_uri="https://localhost:8080/getAToken")
+    if "access_token" in result:
+        # Success
+        session['user'] = result.get('id_token_claims')
+        return redirect(url_for('index'))
+    else:
+        # Error
+        return "Authentication failed", 500
 
 
 # === GET Requests ===
 
-@app.route('/', methods=['GET'])
-def hello_world():
+@app.route('/')
+def index():
+    user_info = session.get('user', {})
+    if user_info:
+        return render_template('index.html', user=user_info)
     return send_from_directory('web/static', "index.html")
+
 
 @app.route('/users', methods=['GET'])
 def get_users():
