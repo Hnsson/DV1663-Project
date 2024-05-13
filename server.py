@@ -29,7 +29,7 @@ init_db(app)
 @app.route('/login')
 def login():
     state = str(uuid.uuid4())  # Generate a new state value for each authentication request
-    auth_url = msal_app.get_authorization_request_url(SCOPE, state=state, redirect_uri="http://localhost:8080/getAToken")
+    auth_url = msal_app.get_authorization_request_url(SCOPE, state=state, redirect_uri="https://localhost:8080/getAToken")
     session['state'] = state  # Store state in session for later validation
     return redirect(auth_url)
 
