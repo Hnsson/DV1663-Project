@@ -51,11 +51,10 @@ def authorized():
 
 
 # === GET Requests ===
-
+# Authentication middleware
 def middleware_authentication(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        print("YO2")
         if 'user' not in session:
             return redirect(url_for('login'))
         return func(*args, **kwargs)
@@ -119,7 +118,11 @@ def search():
         
         return render_template('search/search_results.html', users=users if users else [])
 
-
+@app.route('/logout', methods=['GET'])
+def logout():
+    # Clear session data
+    session.clear()
+    return redirect(url_for('index'))
 
 
 # === POST Requests ===
