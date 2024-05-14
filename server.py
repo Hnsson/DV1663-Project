@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, abort, jsonify, send_from_directory, redirect, session, url_for
+from functools import wraps
 from msal import ConfidentialClientApplication
 import os
 import uuid
@@ -74,8 +75,16 @@ def authorized():
 
 
 # === GET Requests ===
+# Authentication middleware
+def middleware_authentication(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login'))
+        return func(*args, **kwargs)
+    return wrapper
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     user_info = session.get('user', {})
     if user_info:
@@ -90,8 +99,13 @@ def index():
             # return render_template('error.html', message=error_message)
     return send_from_directory('web/static', "index.html")
 
+@app.route('/home', methods=['GET'])
+@middleware_authentication # Check if logged in
+def home():
+    # This is where (when logged in) all the posts is gonna be dispalyed
+    return "Home";
 
-@app.route('/users', methods=['GET'])
+@app.route('/users', methods=['GET']) # Will be removed when fininshed
 def get_users():
     return render_template('users/users.html', users=query_db('SELECT * FROM users'))
 
@@ -101,7 +115,7 @@ def get_user_post(username, post_id):
     post = query_db('SELECT * FROM posts WHERE post_id = ?', [post_id], one=True)
     if post is None:
         abort(404)
-    
+
     comments = query_db('SELECT * FROM comments WHERE post_id = ?', [post_id])
 
     return render_template('posts/post.html', post=post, comments=comments, username=username)
@@ -135,6 +149,13 @@ def search():
         users = query_db("SELECT * FROM users WHERE name LIKE ? OR username LIKE ?", [f'%{search_query}%', f'%{search_query}%'])
         
         return render_template('search/search_results.html', users=users if users else [])
+
+@app.route('/logout', methods=['GET'])
+def logout():
+    # Clear session data
+    session.clear()
+    return redirect(url_for('index'))
+
 
 # === POST Requests ===
 
