@@ -5,7 +5,7 @@ import uuid
 
 # MSAL Configurations
 CLIENT_ID = '0e3eed48-d269-4631-989f-5b25f0f0c54b'
-CLIENT_SECRET = 'f7d9652b-a97f-4db4-b2bd-aba6ed181c58'
+CLIENT_SECRET = 'Ie48Q~Hu21oGeLikTEijYtseHTPNVbWsw4UFGcbp'
 AUTHORITY = 'https://login.microsoftonline.com/fc13d152-2331-488a-bda5-b8a82c098338'
 REDIRECT_PATH = '/getAToken'
 SCOPE = ["User.Read", "email"]
@@ -16,9 +16,21 @@ from database import query_db, init_db
 import random
 import bcrypt
 
+
+
 app = Flask(__name__, template_folder='web/templates')
-app.secret_key = os.urandom(24)  # You can also use a more permanent secret key
+app.secret_key = '127347567897'
 app.config['SESSION_TYPE'] = SESSION_TYPE
+app.config['SESSION_FILE_DIR'] = '/path/to/your/sessions'  # Specify your directory
+os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)  # Create the directory if it doesn't exist
+app.config.update(
+    SESSION_COOKIE_SAMESITE='None',
+    SESSION_COOKIE_SECURE= True
+)
+# app.config['SESSION_COOKIE_HTTPONLY'] = True
+
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Consider 'Lax' or 'Strict' based on need
+
 
 msal_app = ConfidentialClientApplication(
     CLIENT_ID, authority=AUTHORITY, client_credential=CLIENT_SECRET
@@ -29,24 +41,36 @@ init_db(app)
 @app.route('/login')
 def login():
     state = str(uuid.uuid4())  # Generate a new state value for each authentication request
-    auth_url = msal_app.get_authorization_request_url(SCOPE, state=state, redirect_uri="https://localhost:8080/getAToken")
     session['state'] = state  # Store state in session for later validation
+    print("Saved state:", state)
+    auth_url = msal_app.get_authorization_request_url(SCOPE, state=state, redirect_uri="https://127.0.0.1:8080/getAToken")
     return redirect(auth_url)
 
 @app.route('/getAToken')
 def authorized():
+    received_state = request.args.get('state')
+    saved_state = session.get("state")
+    print("Log - Received state:", received_state)  # Debug log
+    print("Log - Expected state from session:", saved_state)  # Debug log
     # Check the state returned to ensure this request is not a result of a CSRF attack
     if request.args.get('state') != session.get("state"):
         return "State mismatch error", 400
     code = request.args.get('code')
-    result = msal_app.acquire_token_by_authorization_code(code, scopes=SCOPE, redirect_uri="https://localhost:8080/getAToken")
+    result = msal_app.acquire_token_by_authorization_code(code, scopes=SCOPE, redirect_uri="https://127.0.0.1:8080/getAToken")
     if "access_token" in result:
         # Success
+        print("SUCCESS") #We signed in!
         session['user'] = result.get('id_token_claims')
         return redirect(url_for('index'))
     else:
         # Error
+        print("Error acquiring token:", result.get("error"), result.get("error_description"))
         return "Authentication failed", 500
+    # code = request.args.get('code')
+    # result = msal_app.acquire_token_by_authorization_code(code, scopes=SCOPE, redirect_uri="https://localhost:8080/getAToken")
+    # session['user'] = result.get('id_token_claims')
+    # received_user = request.args.get('state')
+    # return redirect(url_for('index'))
 
 
 # === GET Requests ===
@@ -55,7 +79,15 @@ def authorized():
 def index():
     user_info = session.get('user', {})
     if user_info:
-        return render_template('index.html', user=user_info)
+        print("WE GOT 'EM!") #We got their info >:)!
+        user_email = user_info.get('email', 'No email found')
+        if user_email and user_email.endswith('@student.bth.se'):
+            return render_template('index.html', user=user_info, email=user_email)
+        else:
+            print("But they are not authorized >:(")
+            error_message = "Unauthorized email domain. Access is restricted to @student.bth.se emails."
+            # Optionally, you could log this event, notify an admin, etc.
+            # return render_template('error.html', message=error_message)
     return send_from_directory('web/static', "index.html")
 
 
@@ -117,10 +149,6 @@ def create_comment(post_id):
 
 
 
-
-
-
-
 # === TEMPORARY Test ===
 @app.route('/create-random-user', methods=['POST'])
 def create_random_user():
@@ -152,12 +180,6 @@ def delete_user(user_id):
     except Exception as e:
         # Return error response
         return jsonify({'success': False, 'error': str(e)}), 500
-
-
-
-
-
-
 
 
 # === Helper Functions ===
@@ -200,4 +222,4 @@ def page_not_found(error):
 
 # Start app
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
+    app.run(debug=True, port=8080, ssl_context=('cert.pem', 'key.pem'))
