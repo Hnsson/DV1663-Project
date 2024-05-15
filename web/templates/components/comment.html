@@ -1,9 +1,7 @@
 <!-- post.html -->
 <div class="comment">
     <h3>{{ comment.title }}</h3>
-    <p>Comment ID: {{ comment.comment_id }}</p>
     <p>{{ comment.body }}</p>
-    <p>Post ID: {{ comment.post_id }}</p>
-    <p>User ID: {{ comment.user_id }}</p>
+    <p>Author: <a href="/user/{{ comment.username }}"> {{ comment.name }} - {{ comment.username }}</a></p>
     <p>Created: {{ comment.created_at }}</p>
 </div>

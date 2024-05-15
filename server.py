@@ -111,7 +111,7 @@ def index():
     if user_info:
         user_email = user_info.get('email', 'No email found')
         if user_email and user_email.endswith('@student.bth.se'):
-            return render_template('index.html', user=user_info, email=user_email)
+            return render_template('index.html', user=user_info, email=user_email, username=user_email.split('@')[0])
         else:
             session.clear()
             error_message = "Unauthorized email domain. Access is restricted to @student.bth.se emails."
@@ -129,13 +129,27 @@ def get_users():
 @app.route('/user/<username>/post/<int:post_id>', methods=['GET'])
 @middleware_authentication # Check if logged in
 def get_user_post(username, post_id):
-    post = query_db('SELECT * FROM posts WHERE post_id = ?', [post_id], one=True)
+    post_query = '''
+        SELECT p.*, u.username AS user_username, u.name AS user_name 
+        FROM posts p
+        JOIN users u ON p.user_id = u.user_id
+        WHERE p.post_id = ?
+    '''
+    post = query_db(post_query, [post_id], one=True)
     if post is None:
         abort(404)
 
-    comments = query_db('SELECT * FROM comments WHERE post_id = ?', [post_id])
+    comments = query_db('''
+        SELECT comments.*, users.name, users.username
+        FROM comments
+        JOIN users ON comments.user_id = users.user_id
+        WHERE comments.post_id = ?
+    ''', [str(post_id)])
 
-    return render_template('posts/post.html', post=post, comments=comments, username=username)
+    user = {'username': post['user_username'], 'name': post['user_name']}  # Create user dictionary
+    
+    return render_template('posts/post.html', post=post, comments=comments, user=user, username=username)
+
 
 # Get specific user page
 @app.route('/user/<username>', methods=['GET'])
@@ -195,30 +209,22 @@ def create_post():
 
 @app.route('/post/<post_id>/create-comment', methods=['POST'])
 def create_comment(post_id):
-    # Check in table if user_id is the same as the user trying to delete before deleting
-    pass;
+    if 'user' in session:
+        user = session['user']
+        user_id = user.get('oid')
+        title = request.form.get('title')
+        content = request.form.get('body')
+        # Get the current date and format it
+        created_at = datetime.now().strftime('%Y-%m-%d')
 
+        # Insert the post into the database
+        query_db("INSERT INTO comments (title, body, user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)", [title, content, user_id, post_id, created_at], False, True)
+        # Return JSON response indicating success
+        return jsonify(success=True)
+    else:
+        # Handle case where user is not logged in
+        return jsonify(success=False, error='User not logged in')
 
-
-
-# === TEMPORARY Test ===
-@app.route('/create-random-user', methods=['POST'])
-def create_random_user():
-    try:
-        # Generate random user information
-        username, password, name, age = generate_random_user()
-        # Hash the password using Bcrypt
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        
-        # Insert the user into the database
-        query_db("INSERT INTO users (username, password_hash, name, age) VALUES (?, ?, ?, ?)", [username, hashed_password.decode('utf-8'), name, age], False, True);
-
-        # Return success response
-        return jsonify({'success': True, 'message': f"User created: Username - {username}, Password - {password}, Age - {age}"}), 201
-    except Exception as e:
-        # Return error response
-        print(e);
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/delete-user/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
@@ -235,18 +241,6 @@ def delete_user(user_id):
 
 
 # === Helper Functions ===
-
-def generate_random_user():
-    # List of random names
-    names = ['Alice', 'Bob', 'Charlie', 'David', 'Emma', 'Frank', 'Grace', 'Henry', 'Ivy', 'Jack']
-    
-    # Generate random username, password, and age
-    name = random.choice(names)
-    username = name[0].lower() + name[-1].lower() + str(random.randint(100, 999))
-    password = ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=8))
-    age = random.randint(18, 54)
-    
-    return username, password, name, age
 
 
 # === DEFAULT Routing ===

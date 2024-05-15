@@ -16,7 +16,23 @@
     
     <h1>User Profile: {{ username }}</h1>
     
-    {% include 'components/post.html' %}
+    {% with user=user, post=post %}
+        {% include 'components/post.html' %}
+    {% endwith %}
+
+    <form id="commentForm" class="col-md-8 mx-auto" action="/post/{{post.post_id}}/create-comment" method="POST">
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+        <div class="form-group">
+            <label for="content">Comment</label>
+            <textarea class="form-control" id="body" name="body" rows="3"  placeholder="What's on your mind?" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Comment</button>
+    </form>
+
+    <hr class="hr hr-blurry" />
 
     <h2>Comments</h2>
     <div class="comments">
@@ -24,5 +40,30 @@
             {% include 'components/comment.html' %}
         {% endfor %}
     </div>
+
+    <script>
+        // Handle form submission asynchronously
+        document.getElementById('commentForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Fetch API to submit form data
+            try {
+                const formData = new FormData(this); // Get form data
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // If comment creation is successful, reload the page
+                    location.reload();
+                } else {
+                    console.error('Error:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
 </body>
 </html>

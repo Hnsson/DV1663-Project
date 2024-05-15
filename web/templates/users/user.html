@@ -16,7 +16,6 @@
     <div class="banner">
         <span>
             <h1>{{ user.name }}</h1>
-            <p>{{ user.age }} years old</p>
         </span>
         <p>@{{ user.username }}</p>
     </div>
@@ -25,7 +24,9 @@
     <div class="posts">
         {% for post in posts %}
             <a href="/user/{{ user.username }}/post/{{ post.post_id }}">
-                {% include 'components/post.html' %}
+                {% with user=user, post=post %}
+                    {% include 'components/post.html' %}
+                {% endwith %}
             </a>
         {% endfor %}
     </div>
