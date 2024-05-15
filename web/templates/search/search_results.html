@@ -35,14 +35,12 @@
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Age</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in users %}
                         <tr>
                             <td><a href="/user/{{ user['username'] }}">{{ user['name'] }} - @{{ user['username'] }}</a></td>
-                            <td>{{ user['age'] }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

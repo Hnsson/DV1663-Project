@@ -63,7 +63,7 @@ def authorized():
     if "access_token" in result:
         # Success
         id_token_claims = result.get('id_token_claims')
-        
+        print(id_token_claims)
         # Check if the user's email ends with '@student.bth.se'
         if id_token_claims.get('email', '').endswith('@student.bth.se'):
             # Check if the user already exists in the database
@@ -72,9 +72,10 @@ def authorized():
                 oid = str(id_token_claims.get('oid'))
                 name = str(id_token_claims.get('name'))
                 email = str(id_token_claims.get('email'))
+                username = email.split('@')[0]
 
                 # Insert the user into the database
-                query_db("INSERT INTO users (user_id, name, email) VALUES (?, ?, ?)", [oid, name, email], False, True)
+                query_db("INSERT INTO users (user_id, name, username, email) VALUES (?, ?, ?, ?)", [oid, name, username, email], False, True)
         session['user'] = id_token_claims
         return redirect(url_for('index'))
     else:
