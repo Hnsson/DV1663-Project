@@ -129,6 +129,7 @@ def get_users():
 @app.route('/user/<username>/post/<int:post_id>', methods=['GET'])
 @middleware_authentication # Check if logged in
 def get_user_post(username, post_id):
+    # Retrieve the post from the database and join with the user that posted to recieve info
     post_query = '''
         SELECT p.*, u.username AS user_username, u.name AS user_name 
         FROM posts p
@@ -139,6 +140,7 @@ def get_user_post(username, post_id):
     if post is None:
         abort(404)
 
+    # Retrieve the comments and join with the user that commented to recieve username
     comments = query_db('''
         SELECT comments.*, users.name, users.username
         FROM comments
