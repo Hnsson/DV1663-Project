@@ -67,7 +67,7 @@ def authorized():
         # Check if the user's email ends with '@student.bth.se'
         if id_token_claims.get('email', '').endswith('@student.bth.se'):
             # Check if the user already exists in the database
-            user_exists = query_db("SELECT * FROM users WHERE oid = ?", [id_token_claims.get('oid')], one=True)
+            user_exists = query_db("SELECT * FROM users WHERE user_id = ?", [id_token_claims.get('oid')], one=True)
             if not user_exists:
                 oid = str(id_token_claims.get('oid'))
                 name = str(id_token_claims.get('name'))
