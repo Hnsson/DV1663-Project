@@ -17,3 +17,7 @@
 .alert-danger strong {
     color: #721c24;
 }
+
+#body {
+    resize: none;
+}

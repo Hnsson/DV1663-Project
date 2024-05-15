@@ -10,7 +10,7 @@
 <body>
     {% include 'components/navbar.html' %}
 
-    
+
     {% if error %}
     <div class="alert alert-danger" role="alert">
         <strong>Error:</strong> {{ error }}
@@ -18,18 +18,36 @@
     {% endif %}
 
 
-    <h2 class="my-5 text-center">Index Page</h2>
+    {% if user %}
+    <div class="my-5 text-center">
+      <h1>Welcome, {{ user.get('name', 'Guest') }}</h1>
+      <p>Your email: {{ email }}</p>
+    </div>
+    
     <hr class="hr hr-blurry" />
 
+    <form class="col-md-8 mx-auto" action="/create-post" method="POST">
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+        <div class="form-group">
+            <label for="content">Content</label>
+            <textarea class="form-control" id="body" name="body" rows="3"  placeholder="What's on your mind?" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Post</button>
+    </form>
 
-    {% if user %}
-    <h1>Welcome, {{ user.get('name', 'Guest') }}</h1>
-    <p>Your email: {{ email }}</p>
+    <hr class="hr hr-blurry" />
     {% endif %}
 
-
+    <h2 class="col-md-8 my-5">Recent posts:</h2>
     {% if posts %}
-      <!-- ADD POSTS HERE -->
+      <div class="col-md-8 mx-auto">
+        <!-- ADD POSTS HERE -->
+      </div>
+    {% else %}
+      <p class="col-md-8 mx-auto">No posts yet.</p>
     {% endif %}
 
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>

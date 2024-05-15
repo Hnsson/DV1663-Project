@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request, abort, jsonify, send_from_directory, redirect, session, url_for
-from functools import wraps
 from msal import ConfidentialClientApplication
 import os
 import uuid
+
+from functools import wraps
+from datetime import datetime
 
 # MSAL Configurations
 CLIENT_ID = '0e3eed48-d269-4631-989f-5b25f0f0c54b'
@@ -60,9 +62,20 @@ def authorized():
     result = msal_app.acquire_token_by_authorization_code(code, scopes=SCOPE, redirect_uri="https://127.0.0.1:8080/getAToken")
     if "access_token" in result:
         # Success
-        print("SUCCESS") #We signed in!
-        session['user'] = result.get('id_token_claims')
-        print("ID TOKEN: ", result.get('id_token_claims'))
+        id_token_claims = result.get('id_token_claims')
+        
+        # Check if the user's email ends with '@student.bth.se'
+        if id_token_claims.get('email', '').endswith('@student.bth.se'):
+            # Check if the user already exists in the database
+            user_exists = query_db("SELECT * FROM users WHERE oid = ?", [id_token_claims.get('oid')], one=True)
+            if not user_exists:
+                oid = str(id_token_claims.get('oid'))
+                name = str(id_token_claims.get('name'))
+                email = str(id_token_claims.get('email'))
+
+                # Insert the user into the database
+                query_db("INSERT INTO users (user_id, name, email) VALUES (?, ?, ?)", [oid, name, email], False, True)
+        session['user'] = id_token_claims
         return redirect(url_for('index'))
     else:
         # Error
@@ -108,7 +121,8 @@ def index():
 
 @app.route('/users', methods=['GET']) # Will be removed when fininshed
 def get_users():
-    return render_template('users/users.html', users=query_db('SELECT * FROM users'))
+    # return render_template('users/users.html', users=query_db('SELECT * FROM users'))
+    return "Expired path..."
 
 # Get post from user
 @app.route('/user/<username>/post/<int:post_id>', methods=['GET'])
@@ -165,10 +179,22 @@ def logout():
 
 @app.route('/create-post', methods=['POST'])
 def create_post():
-    pass;
+    if 'user' in session:
+        user = session['user']
+        user_id = user.get('oid')
+        title = request.form.get('title')
+        content = request.form.get('body')
+        # Get the current date and format it
+        created_at = datetime.now().strftime('%Y-%m-%d')
+
+        # Insert the post into the database
+        query_db("INSERT INTO posts (title, body ,user_id, created_at) VALUES (?, ?, ?, ?)", [title, content, user_id, created_at], False, True)
+
+        return redirect(url_for('index'))
 
 @app.route('/post/<post_id>/create-comment', methods=['POST'])
 def create_comment(post_id):
+    # Check in table if user_id is the same as the user trying to delete before deleting
     pass;
 
 
