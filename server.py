@@ -62,6 +62,7 @@ def authorized():
         # Success
         print("SUCCESS") #We signed in!
         session['user'] = result.get('id_token_claims')
+        print("ID TOKEN: ", result.get('id_token_claims'))
         return redirect(url_for('index'))
     else:
         # Error
@@ -79,31 +80,31 @@ def authorized():
 def middleware_authentication(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if 'user' not in session:
-            return redirect(url_for('login'))
-        return func(*args, **kwargs)
+        user_credentials = session.get('user', {})
+        if user_credentials:
+            if user_credentials.get('email', '').endswith('@student.bth.se'):
+                return func(*args, **kwargs)
+            else:
+                return redirect(url_for('index'))
+        else:
+            return render_template('error/error.html', title='303 - Invalid credentials.', code=303, message="You need to login."), 303
     return wrapper
+
 
 @app.route('/', methods=['GET'])
 def index():
     user_info = session.get('user', {})
     if user_info:
-        print("WE GOT 'EM!") #We got their info >:)!
         user_email = user_info.get('email', 'No email found')
         if user_email and user_email.endswith('@student.bth.se'):
             return render_template('index.html', user=user_info, email=user_email)
         else:
-            print("But they are not authorized >:(")
+            session.clear()
             error_message = "Unauthorized email domain. Access is restricted to @student.bth.se emails."
-            # Optionally, you could log this event, notify an admin, etc.
-            # return render_template('error.html', message=error_message)
+            return render_template('index.html', error=error_message)
+
     return send_from_directory('web/static', "index.html")
 
-@app.route('/home', methods=['GET'])
-@middleware_authentication # Check if logged in
-def home():
-    # This is where (when logged in) all the posts is gonna be dispalyed
-    return "Home";
 
 @app.route('/users', methods=['GET']) # Will be removed when fininshed
 def get_users():
@@ -111,6 +112,7 @@ def get_users():
 
 # Get post from user
 @app.route('/user/<username>/post/<int:post_id>', methods=['GET'])
+@middleware_authentication # Check if logged in
 def get_user_post(username, post_id):
     post = query_db('SELECT * FROM posts WHERE post_id = ?', [post_id], one=True)
     if post is None:
@@ -122,6 +124,7 @@ def get_user_post(username, post_id):
 
 # Get specific user page
 @app.route('/user/<username>', methods=['GET'])
+@middleware_authentication # Check if logged in
 def get_user(username):
     user = query_db('SELECT * FROM users WHERE username = ?', [username], one=True)
     if user is None:
@@ -132,6 +135,7 @@ def get_user(username):
     return render_template('users/user.html', user=user, posts=posts)
 
 @app.route('/search', methods=['GET'])
+@middleware_authentication # Check if logged in
 def search():
     search_query = request.args.get('q');
 

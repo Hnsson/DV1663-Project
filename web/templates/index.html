@@ -8,43 +8,29 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 </head>
 <body>
+    {% include 'components/navbar.html' %}
 
-    <!--#include virtual="../templates/components/navbar.html" -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="/">Expand at lg</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExample05" aria-controls="navbarsExample05" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-  
-        <div class="collapse navbar-collapse" id="navbarsExample05">
-          <ul class="navbar-nav mr-auto mx-5">
-            <li class="nav-item active">
-              <a class="nav-link" href="/">Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/about">About</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/users">Users (will remove)</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/post">Post (test)</a>
-            </li>
-          </ul>
+    
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
 
-          <form class="form-inline my-2 my-md-0 mx-2" action="/search" method="GET">
-            <input class="form-control" type="text" name="q" placeholder="Search">
-          </form>
-          <div class="my-2 my-md-0">
-            <a class="btn btn-outline-light me-2" href="/login" role="button">Login</a>
-          </div>
-        </div>
-    </nav>
 
     <h2 class="my-5 text-center">Index Page</h2>
+    <hr class="hr hr-blurry" />
+
+
+    {% if user %}
     <h1>Welcome, {{ user.get('name', 'Guest') }}</h1>
     <p>Your email: {{ email }}</p>
-    <hr class="hr hr-blurry" />
+    {% endif %}
+
+
+    {% if posts %}
+      <!-- ADD POSTS HERE -->
+    {% endif %}
 
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
