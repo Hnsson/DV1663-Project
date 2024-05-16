@@ -6,3 +6,8 @@
     background-color: #f9f9f9;
     width:50%;
 }
+
+.post h3 a {
+    color:Black;
+    text-decoration: underline;
+}

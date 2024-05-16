@@ -1,7 +1,7 @@
 <!-- post.html -->
 <div class="post">
-    <h3>{{ post.title }}</h3>
+    <h3><a href="/user/{{ post.username }}/post/{{ post.post_id }}">{{ post.title }}</a></h3>
     <p>{{ post.body }}</p>
-    <p>Author: {{ user.name }} - {{ user.username }}</p>
+    <p>Author: <a href="/user/{{ post.username }}"> {{ post.name }} - {{ post.username }}</a></p>
     <p>Posted on: {{ post.created_at }}</p>
 </div>

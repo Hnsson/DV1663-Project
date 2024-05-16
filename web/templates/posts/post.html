@@ -14,12 +14,11 @@
 <body>
     {% include 'components/navbar.html' %}
     
-    <h1>User Profile: {{ username }}</h1>
-    
-    {% with user=user, post=post %}
+    {% with post=post %}
         {% include 'components/post.html' %}
     {% endwith %}
 
+    <h2>Post a comment</h2>
     <form id="commentForm" class="col-md-8 mx-auto" action="/post/{{post.post_id}}/create-comment" method="POST">
         <div class="form-group">
             <label for="title">Title</label>

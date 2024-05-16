@@ -18,6 +18,11 @@
     color: #721c24;
 }
 
+.posts > :nth-child(odd) {
+    background-color: #f0f0f0;
+}
+
+
 #body {
     resize: none;
 }

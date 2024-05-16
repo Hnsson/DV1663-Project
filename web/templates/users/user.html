@@ -23,11 +23,9 @@
     <h2>Posts</h2>
     <div class="posts">
         {% for post in posts %}
-            <a href="/user/{{ user.username }}/post/{{ post.post_id }}">
-                {% with user=user, post=post %}
-                    {% include 'components/post.html' %}
-                {% endwith %}
-            </a>
+            {% with post=post %}
+                {% include 'components/post.html' %}
+            {% endwith %}
         {% endfor %}
     </div>
 </body>

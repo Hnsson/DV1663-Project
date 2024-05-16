@@ -97,7 +97,7 @@ def middleware_authentication(func):
         user_credentials = session.get('user', {})
         if user_credentials:
             if user_credentials.get('email', '').endswith('@student.bth.se'):
-                return func(*args, **kwargs)
+                return func(*args, **kwargs, user_credentials=user_credentials)
             else:
                 return redirect(url_for('index'))
         else:
@@ -111,14 +111,17 @@ def index():
     if user_info:
         user_email = user_info.get('email', 'No email found')
         if user_email and user_email.endswith('@student.bth.se'):
-            return render_template('index.html', user=user_info, email=user_email, username=user_email.split('@')[0])
+            # Fetch posts, default should be based on recent posts
+            sort_option = request.args.get('sort_by', 'recent')
+            posts = fetch_posts(sort_option)
+            return render_template('index.html', user=user_info, email=user_email, username=user_email.split('@')[0], posts=posts, sort_by=sort_option)
         else:
             session.clear()
             error_message = "Unauthorized email domain. Access is restricted to @student.bth.se emails."
             return render_template('index.html', error=error_message)
 
     return send_from_directory('web/static', "index.html")
-
+    
 
 @app.route('/users', methods=['GET']) # Will be removed when fininshed
 def get_users():
@@ -128,15 +131,11 @@ def get_users():
 # Get post from user
 @app.route('/user/<username>/post/<int:post_id>', methods=['GET'])
 @middleware_authentication # Check if logged in
-def get_user_post(username, post_id):
+def get_user_post(username, post_id, user_credentials): # The user_credentials is sent from middleware_authentication
+    self_username = user_credentials.get('email', '').split('@')[0]
     # Retrieve the post from the database and join with the user that posted to recieve info
-    post_query = '''
-        SELECT p.*, u.username AS user_username, u.name AS user_name 
-        FROM posts p
-        JOIN users u ON p.user_id = u.user_id
-        WHERE p.post_id = ?
-    '''
-    post = query_db(post_query, [post_id], one=True)
+
+    post = fetch_posts(post_id=post_id, limit=1)
     if post is None:
         abort(404)
 
@@ -148,26 +147,27 @@ def get_user_post(username, post_id):
         WHERE comments.post_id = ?
     ''', [str(post_id)])
 
-    user = {'username': post['user_username'], 'name': post['user_name']}  # Create user dictionary
     
-    return render_template('posts/post.html', post=post, comments=comments, user=user, username=username)
-
+    return render_template('posts/post.html', post=post, comments=comments, username=self_username)
 
 # Get specific user page
 @app.route('/user/<username>', methods=['GET'])
 @middleware_authentication # Check if logged in
-def get_user(username):
+def get_user(username, user_credentials): # The user_credentials is sent from middleware_authentication
+    self_username = user_credentials.get('email', '').split('@')[0]
+
+
     user = query_db('SELECT * FROM users WHERE username = ?', [username], one=True)
     if user is None:
         abort(404)
     # Query posts for the user from the database
-    posts = query_db('SELECT * FROM posts WHERE user_id = ?', [user['user_id']])
+    posts = fetch_posts(user_id=user['user_id'])
     
-    return render_template('users/user.html', user=user, posts=posts)
+    return render_template('users/user.html', user=user, posts=posts, username=self_username)
 
 @app.route('/search', methods=['GET'])
 @middleware_authentication # Check if logged in
-def search():
+def search(user_credentials):
     search_query = request.args.get('q');
 
     print(search_query);
@@ -193,6 +193,15 @@ def logout():
 
 
 # === POST Requests ===
+
+@app.route('/', methods=['POST'])
+@middleware_authentication # Check if logged in
+def index_post(user_credentials):
+    sort_by = request.form.get('sort_by')
+
+    # Redirect to the index page with the sorting preference as a query parameter
+    return redirect(url_for('index', sort_by=sort_by))
+
 
 @app.route('/create-post', methods=['POST'])
 def create_post():
@@ -242,8 +251,43 @@ def delete_user(user_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# === Helper Functions ===
+# === USER DEFINED FUNCTIONS ===
+def fetch_posts(sort_by=None, limit=10, post_id=None, user_id=None):
+    query = '''
+        SELECT p.*, u.name, u.username
+        FROM posts p
+        JOIN users u ON p.user_id = u.user_id
+    '''
+    params = []
 
+    # Add WHERE clause if post_id is provided
+    if post_id is not None:
+        query += ' WHERE p.post_id = ?'
+        params.append(post_id)
+    if user_id is not None:
+        query += ' WHERE u.user_id = ?'
+        params.append(user_id)
+
+    # Fetch data from the database based on the sort_by parameter
+    if sort_by == 'recent':
+        query += ' ORDER BY created_at DESC'
+    elif sort_by == 'likes':
+        query += ' ORDER BY likes DESC'  # Assuming 'likes' is a column in the 'posts' table
+    # Add more sorting options as needed
+    else:
+        # Default sorting
+        pass
+
+    # Add LIMIT clause
+    if limit == 1:
+        query += ' LIMIT 1'
+        result = query_db(query, params, one=True)
+    else:
+        query += ' LIMIT ?'
+        params.append(limit)
+        result = query_db(query, params)
+
+    return result
 
 # === DEFAULT Routing ===
 
