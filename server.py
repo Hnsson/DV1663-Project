@@ -254,29 +254,28 @@ def delete_user(user_id):
 # === USER DEFINED FUNCTIONS ===
 def fetch_posts(sort_by=None, limit=10, post_id=None, user_id=None):
     query = '''
-        SELECT p.*, u.name, u.username
+        SELECT p.*, u.name, u.username, COUNT(l.post_id) as like_count
         FROM posts p
         JOIN users u ON p.user_id = u.user_id
+        LEFT JOIN likes l ON p.post_id = l.post_id
     '''
     params = []
 
-    # Add WHERE clause if post_id is provided
+    # Add WHERE clause if post_id or user_id is provided
     if post_id is not None:
         query += ' WHERE p.post_id = ?'
         params.append(post_id)
-    if user_id is not None:
+    elif user_id is not None:
         query += ' WHERE u.user_id = ?'
         params.append(user_id)
 
     # Fetch data from the database based on the sort_by parameter
     if sort_by == 'recent':
-        query += ' ORDER BY created_at DESC'
+        query += ' GROUP BY p.post_id ORDER BY created_at DESC'
     elif sort_by == 'likes':
-        query += ' ORDER BY likes DESC'  # Assuming 'likes' is a column in the 'posts' table
-    # Add more sorting options as needed
+        query += ' GROUP BY p.post_id ORDER BY like_count DESC'
     else:
-        # Default sorting
-        pass
+        pass  # Default sorting
 
     # Add LIMIT clause
     if limit == 1:

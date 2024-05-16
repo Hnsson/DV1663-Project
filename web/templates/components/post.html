@@ -1,7 +1,14 @@
 <!-- post.html -->
+<script src="https://kit.fontawesome.com/4c4ab264c0.js" crossorigin="anonymous"></script>
 <div class="post">
     <h3><a href="/user/{{ post.username }}/post/{{ post.post_id }}">{{ post.title }}</a></h3>
     <p>{{ post.body }}</p>
     <p>Author: <a href="/user/{{ post.username }}"> {{ post.name }} - {{ post.username }}</a></p>
     <p>Posted on: {{ post.created_at }}</p>
+    <p>Likes: {{ post.like_count }}</p>
+    {% if liked %}
+        <i class="fa-solid fa-heart"></i>
+    {% else %}
+        <i class="fa-regular fa-heart"></i>
+    {% endif %}
 </div>
