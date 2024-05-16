@@ -113,7 +113,7 @@ def index():
         if user_email and user_email.endswith('@student.bth.se'):
             # Fetch posts, default should be based on recent posts
             sort_option = request.args.get('sort_by', 'recent')
-            posts = fetch_posts(sort_option)
+            posts = fetch_posts(self_id=user_info.get('oid'), sort_by=sort_option)
             return render_template('index.html', user=user_info, email=user_email, username=user_email.split('@')[0], posts=posts, sort_by=sort_option)
         else:
             session.clear()
@@ -121,12 +121,7 @@ def index():
             return render_template('index.html', error=error_message)
 
     return send_from_directory('web/static', "index.html")
-    
 
-@app.route('/users', methods=['GET']) # Will be removed when fininshed
-def get_users():
-    # return render_template('users/users.html', users=query_db('SELECT * FROM users'))
-    return "Expired path..."
 
 # Get post from user
 @app.route('/user/<username>/post/<int:post_id>', methods=['GET'])
@@ -135,7 +130,7 @@ def get_user_post(username, post_id, user_credentials): # The user_credentials i
     self_username = user_credentials.get('email', '').split('@')[0]
     # Retrieve the post from the database and join with the user that posted to recieve info
 
-    post = fetch_posts(post_id=post_id, limit=1)
+    post = fetch_posts(self_id=user_credentials.get('oid'), post_id=post_id, limit=1)
     if post is None:
         abort(404)
 
@@ -161,7 +156,7 @@ def get_user(username, user_credentials): # The user_credentials is sent from mi
     if user is None:
         abort(404)
     # Query posts for the user from the database
-    posts = fetch_posts(user_id=user['user_id'])
+    posts = fetch_posts(self_id=user_credentials.get('oid'), user_id=user['user_id'])
     
     return render_template('users/user.html', user=user, posts=posts, username=self_username)
 
@@ -202,7 +197,6 @@ def index_post(user_credentials):
     # Redirect to the index page with the sorting preference as a query parameter
     return redirect(url_for('index', sort_by=sort_by))
 
-
 @app.route('/create-post', methods=['POST'])
 def create_post():
     if 'user' in session:
@@ -236,38 +230,36 @@ def create_comment(post_id):
         # Handle case where user is not logged in
         return jsonify(success=False, error='User not logged in')
 
+@app.route('/like/<int:post_id>/<action>')
+@middleware_authentication # Check if logged in
+def like_post(post_id, action, user_credentials):
+    user_id = user_credentials.get('oid')
+    if (action == 'like'):
+         # Insert a new row into the likes table
+        query_db("INSERT INTO likes (post_id, user_id) VALUES (?, ?)", [post_id, user_id], False, True)
+    elif (action == 'unlike'):
+        # Delete the row from the likes table
+        query_db("DELETE FROM likes WHERE post_id = ? AND user_id = ?", [post_id, user_id], False, True)
+    # Execute the query
 
-@app.route('/delete-user/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    try:
-        # Perform deletion of the user with the specified user_id
-        # Assuming you have a function named delete_user_from_db to handle this operation
-        query_db("DELETE FROM users WHERE user_id = ?", [user_id], False, True);
-
-        # Return success response
-        return jsonify({'success': True, 'message': f"User with ID {user_id} deleted successfully"}), 200
-    except Exception as e:
-        # Return error response
-        return jsonify({'success': False, 'error': str(e)}), 500
+    return redirect(request.referrer)
 
 
 # === USER DEFINED FUNCTIONS ===
-def fetch_posts(sort_by=None, limit=10, post_id=None, user_id=None):
+def fetch_posts(self_id, sort_by=None, limit=10, post_id=None, user_id=None):
     query = '''
-        SELECT p.*, u.name, u.username, COUNT(l.post_id) as like_count
+        SELECT p.*, u.name, u.username, COUNT(l.post_id) as like_count,
+        CASE WHEN EXISTS (SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ?) THEN 1 ELSE 0 END as is_liked
         FROM posts p
         JOIN users u ON p.user_id = u.user_id
         LEFT JOIN likes l ON p.post_id = l.post_id
     '''
-    params = []
+    params = [self_id] if self_id else []
 
-    # Add WHERE clause if post_id or user_id is provided
+    # Add WHERE clause if post_id is provided
     if post_id is not None:
         query += ' WHERE p.post_id = ?'
         params.append(post_id)
-    elif user_id is not None:
-        query += ' WHERE u.user_id = ?'
-        params.append(user_id)
 
     # Fetch data from the database based on the sort_by parameter
     if sort_by == 'recent':
@@ -287,6 +279,7 @@ def fetch_posts(sort_by=None, limit=10, post_id=None, user_id=None):
         result = query_db(query, params)
 
     return result
+
 
 # === DEFAULT Routing ===
 

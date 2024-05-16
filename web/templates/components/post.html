@@ -6,9 +6,10 @@
     <p>Author: <a href="/user/{{ post.username }}"> {{ post.name }} - {{ post.username }}</a></p>
     <p>Posted on: {{ post.created_at }}</p>
     <p>Likes: {{ post.like_count }}</p>
-    {% if liked %}
-        <i class="fa-solid fa-heart"></i>
+    {% if post.is_liked %}
+        <a href="{{ url_for('like_post', post_id=post.post_id, action='unlike') }}"><i class="fa-solid fa-heart"></i></a>
     {% else %}
-        <i class="fa-regular fa-heart"></i>
+        <a href="{{ url_for('like_post', post_id=post.post_id, action='like') }}"><i class="fa-regular fa-heart"></i></a>
     {% endif %}
 </div>
+
