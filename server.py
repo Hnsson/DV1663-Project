@@ -205,7 +205,7 @@ def create_post():
         title = request.form.get('title')
         content = request.form.get('body')
         # Get the current date and format it
-        created_at = datetime.now().strftime('%Y-%m-%d')
+        created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # Insert the post into the database
         query_db("INSERT INTO posts (title, body ,user_id, created_at) VALUES (?, ?, ?, ?)", [title, content, user_id, created_at], False, True)
