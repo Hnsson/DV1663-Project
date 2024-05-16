@@ -260,6 +260,9 @@ def fetch_posts(self_id, sort_by=None, limit=10, post_id=None, user_id=None):
     if post_id is not None:
         query += ' WHERE p.post_id = ?'
         params.append(post_id)
+    if user_id is not None:
+        query += ' WHERE u.user_id = ?'
+        params.append(user_id)
 
     # Fetch data from the database based on the sort_by parameter
     if sort_by == 'recent':
