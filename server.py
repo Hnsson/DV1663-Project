@@ -151,12 +151,14 @@ def get_user_post(username, post_id, user_credentials): # The user_credentials i
 def get_user(username, user_credentials): # The user_credentials is sent from middleware_authentication
     self_username = user_credentials.get('email', '').split('@')[0]
 
-
     user = query_db('SELECT * FROM users WHERE username = ?', [username], one=True)
     if user is None:
         abort(404)
+    print(user['user_id'])
     # Query posts for the user from the database
+    # posts = fetch_posts(self_id=user_credentials.get('oid'))
     posts = fetch_posts(self_id=user_credentials.get('oid'), user_id=user['user_id'])
+    print(len(posts))
     
     return render_template('users/user.html', user=user, posts=posts, username=self_username)
 
@@ -248,11 +250,14 @@ def like_post(post_id, action, user_credentials):
 # === USER DEFINED FUNCTIONS ===
 def fetch_posts(self_id, sort_by=None, limit=10, post_id=None, user_id=None):
     query = '''
-        SELECT p.*, u.name, u.username, COUNT(l.post_id) as like_count,
-        CASE WHEN EXISTS (SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ?) THEN 1 ELSE 0 END as is_liked
+        SELECT p.*, u.name, u.username, 
+               COUNT(DISTINCT l.like_id) as like_count, 
+               COUNT(DISTINCT c.comment_id) as comment_count,
+               CASE WHEN EXISTS (SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ?) THEN 1 ELSE 0 END as is_liked
         FROM posts p
         JOIN users u ON p.user_id = u.user_id
         LEFT JOIN likes l ON p.post_id = l.post_id
+        LEFT JOIN comments c ON p.post_id = c.post_id
     '''
     params = [self_id] if self_id else []
 
@@ -264,11 +269,13 @@ def fetch_posts(self_id, sort_by=None, limit=10, post_id=None, user_id=None):
         query += ' WHERE u.user_id = ?'
         params.append(user_id)
 
+    query += ' GROUP BY p.post_id, u.user_id'
+
     # Fetch data from the database based on the sort_by parameter
     if sort_by == 'recent':
-        query += ' GROUP BY p.post_id ORDER BY created_at DESC'
+        query += ' ORDER BY p.created_at DESC'
     elif sort_by == 'likes':
-        query += ' GROUP BY p.post_id ORDER BY like_count DESC'
+        query += ' ORDER BY like_count DESC'
     else:
         pass  # Default sorting
 
@@ -279,9 +286,11 @@ def fetch_posts(self_id, sort_by=None, limit=10, post_id=None, user_id=None):
     else:
         query += ' LIMIT ?'
         params.append(limit)
+        print(query, params)
         result = query_db(query, params)
 
     return result
+
 
 
 # === DEFAULT Routing ===

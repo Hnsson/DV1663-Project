@@ -60,7 +60,7 @@
           <hr class="hr hr-blurry" />
           <div class="posts">
             {% for post in posts %}
-              {% with user=user, post=post %}
+              {% with post=post %}
                   {% include 'components/post.html' %}
               {% endwith %}
             {% endfor %}
