@@ -21,22 +21,3 @@
 /* .posts > :nth-child(odd) {
     background-color: #f0f0f0;
 } */
-
-
-#body {
-    resize: none;
-}
-.heart {
-    width: 80px;
-    height: 80px;
-    background: url("https://cssanimation.rocks/images/posts/steps/heart.png") no-repeat;
-    background-position: 0 0;
-    cursor: pointer;
-    transition: background-position 1s steps(28);
-    transition-duration: 0s;
-}
-
-.heart.is-active {
-    transition-duration: 1s;
-    background-position: -2800px 0;
-}

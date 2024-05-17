@@ -154,11 +154,9 @@ def get_user(username, user_credentials): # The user_credentials is sent from mi
     user = query_db('SELECT * FROM users WHERE username = ?', [username], one=True)
     if user is None:
         abort(404)
-    print(user['user_id'])
     # Query posts for the user from the database
     # posts = fetch_posts(self_id=user_credentials.get('oid'))
     posts = fetch_posts(self_id=user_credentials.get('oid'), user_id=user['user_id'])
-    print(len(posts))
     
     return render_template('users/user.html', user=user, posts=posts, username=self_username)
 
@@ -310,7 +308,6 @@ def fetch_posts(self_id, sort_by=None, limit=10, post_id=None, user_id=None):
     else:
         query += ' LIMIT ?'
         params.append(limit)
-        print(query, params)
         result = query_db(query, params)
 
     return result

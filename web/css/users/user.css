@@ -4,10 +4,6 @@
     box-sizing: border-box;
 }
 
-.posts > :nth-child(odd) {
-    background-color: #f0f0f0;
-}
-
 
 .banner {
     background-color: #f0f0f0;
