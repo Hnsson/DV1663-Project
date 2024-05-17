@@ -232,19 +232,43 @@ def create_comment(post_id):
         # Handle case where user is not logged in
         return jsonify(success=False, error='User not logged in')
 
-@app.route('/like/<int:post_id>/<action>')
-@middleware_authentication # Check if logged in
+# @app.route('/like/<int:post_id>/<action>')
+# @middleware_authentication # Check if logged in
+# def like_post(post_id, action, user_credentials):
+#     user_id = user_credentials.get('oid')
+#     if (action == 'like'):
+#          # Insert a new row into the likes table
+#         query_db("INSERT INTO likes (post_id, user_id) VALUES (?, ?)", [post_id, user_id], False, True)
+#     elif (action == 'unlike'):
+#         # Delete the row from the likes table
+#         query_db("DELETE FROM likes WHERE post_id = ? AND user_id = ?", [post_id, user_id], False, True)
+#     # Execute the query
+
+#     return redirect(request.referrer)
+
+@app.route('/like/<int:post_id>/<action>', methods=['POST'])
+@middleware_authentication
 def like_post(post_id, action, user_credentials):
     user_id = user_credentials.get('oid')
-    if (action == 'like'):
-         # Insert a new row into the likes table
-        query_db("INSERT INTO likes (post_id, user_id) VALUES (?, ?)", [post_id, user_id], False, True)
-    elif (action == 'unlike'):
-        # Delete the row from the likes table
-        query_db("DELETE FROM likes WHERE post_id = ? AND user_id = ?", [post_id, user_id], False, True)
-    # Execute the query
+    success = False
+    
+    # Check if the user has already liked the post
+    existing_like = query_db("SELECT * FROM likes WHERE post_id = ? AND user_id = ?", [post_id, user_id], one=True)
 
-    return redirect(request.referrer)
+    if existing_like and action == 'like':
+        # User has already liked the post, prevent re-liking
+        success = False
+    else:
+        if action == 'like':
+            # Insert a new row into the likes table
+            query_db("INSERT INTO likes (post_id, user_id) VALUES (?, ?)", [post_id, user_id], False, True)
+            success = True
+        elif action == 'unlike':
+            # Delete the row from the likes table
+            query_db("DELETE FROM likes WHERE post_id = ? AND user_id = ?", [post_id, user_id], False, True)
+            success = True
+
+    return jsonify(success=success)
 
 
 # === USER DEFINED FUNCTIONS ===
