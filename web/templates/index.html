@@ -18,14 +18,14 @@
     {% endif %}
 
     {% if user %}
-    <div class="my-5 text-center">
-      <h1>Welcome, {{ user.get('name', 'Guest') }}</h1>
-      <p>Your email: {{ email }}</p>
-    </div>
-    
-    <hr class="hr hr-blurry" />
+      <div class="my-5 text-center">
+        <h1>Welcome, {{ user.get('name', 'Guest') }}</h1>
+        <p>Your email: {{ email }}</p>
+      </div>
+      
+      <hr class="hr hr-blurry" />
 
-    <form class="col-md-8 mx-auto" action="/create-post" method="POST">
+      <form class="col-md-8 mx-auto" action="/create-post" method="POST">
         <div class="form-group">
             <label for="title">Title</label>
             <input type="text" class="form-control" id="title" name="title" required>
@@ -34,12 +34,11 @@
             <label for="content">Content</label>
             <textarea class="form-control" id="body" name="body" rows="3"  placeholder="What's on your mind?" required></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Create Post</button>
-    </form>
+        <button type="submit" class="btn btn-primary">Create a post</button>
+      </form>
 
-    <hr class="hr hr-blurry" />
-
-    <h2 class="col-md-8 my-5">Recent posts:</h2>
+      <hr class="hr hr-blurry" />
+      
       {% if posts %}
         <div class="col-md-8 mx-auto">
           <!-- ADD POSTS HERE -->

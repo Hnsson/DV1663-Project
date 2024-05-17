@@ -19,10 +19,13 @@
     width: 80px;
     height: 80px;
     background: url("https://cssanimation.rocks/images/posts/steps/heart.png") no-repeat;
-    background-position: 0 0;
+    background-position:0 0;
     cursor: pointer;
     transition: background-position 1s steps(28);
     transition-duration: 0s;
+    display: flex;
+    justify-content: right;
+    align-items: center;
 }
 
 .heart.is-active {
@@ -30,6 +33,11 @@
     background-position: -2800px 0;
 }
 
+.like-count {
+    /* Add your styles here */
+    font-size: 14px; /* Example: Adjust the font size */
+    color: red; /* Example: Change the color */
+}
 
 
 
@@ -40,17 +48,30 @@
 
 
 
-
-
-/* body{margin-top:20px;} */
 .blog-grid {
     position: relative;
-    box-shadow: 0 1rem 1.75rem 0 rgba(45, 55, 75, 0.1);
+    /* box-shadow: 0 1rem 1.75rem 0 rgba(45, 55, 75, 0.1); */
     height: 100%;
     border: 0.0625rem solid rgba(220, 224, 229, 0.6);
     border-radius: 0.25rem;
     transition: all .2s ease-in-out;
     height: 100%
+}
+
+.meta {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.top-half {
+    flex: 1;
+}
+
+.bottom-half {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
 }
 
 .blog-grid span {
