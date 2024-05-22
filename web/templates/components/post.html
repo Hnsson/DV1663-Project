@@ -10,16 +10,15 @@
             <div class="meta meta-style2">
                 <ul class="meta">
                     <div class="top-half">
-                        <li><i class="fas fa-calendar-alt"></i> {{ post.created_at }}</li>
-                        <li><a href="/user/{{ post.username }}"> {{ post.name }} - {{ post.username }}</a></li>
+                        <li><a href="/user/{{ post.username }}"> {{ post.name }} - {{ post.username }}</a> • <span class="created_at">{{ post.created_at|parse_datetime }}</span></li>
                     </div>
                     <div class="bottom-half">
                         <ul>
                             <li>
-                                <div class="comment-button">
+                                <a class="comment-button" href="/user/{{ post.username }}/post/{{ post.post_id }}#comments">
                                     <i class="fas fa-comments"></i>
                                     <div class="comment-count">{{ post.comment_count }}</div>
-                                </div>
+                                </a>
                             </li>
                             <li>
                                 <div class="like-button" onclick="likePost('{{ post.post_id }}', {{ post.is_liked }}, this)">
@@ -58,7 +57,7 @@
         // Prepare AJAX request data
         const newLikeStatus = !currentLikeStatus;
         const action = newLikeStatus ? 'like' : 'unlike';
-        const url = "/like/" + postId + "/" + action;
+        const url = "/likepost/" + postId + "/" + action;
 
         // Send an AJAX request to handle the like/unlike action
         $.ajax({

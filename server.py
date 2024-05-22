@@ -30,6 +30,17 @@ app.config.update(
     SESSION_COOKIE_SAMESITE='None',
     SESSION_COOKIE_SECURE= True
 )
+# Custom filter function to parse string to datetime
+def parse_datetime(value, format='%Y-%m-%d %H:%M:%S'):
+    from datetime import datetime
+    try:
+        parsed_datetime = datetime.strptime(value, format)
+        return parsed_datetime.strftime('%b %d %Y - %H:%M')
+    except ValueError:
+        # Fallback behavior: Return the original value
+        return value
+# Register the custom filter
+app.template_filter('parse_datetime')(parse_datetime)
 # app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Consider 'Lax' or 'Strict' based on need
@@ -135,12 +146,25 @@ def get_user_post(username, post_id, user_credentials): # The user_credentials i
         abort(404)
 
     # Retrieve the comments and join with the user that commented to recieve username
+    # comments = query_db('''
+    #     SELECT comments.*, users.name, users.username
+    #     FROM comments
+    #     JOIN users ON comments.user_id = users.user_id
+    #     WHERE comments.post_id = ?
+    # ''', [str(post_id)])
+
     comments = query_db('''
-        SELECT comments.*, users.name, users.username
+        SELECT comments.*, 
+            users.name, 
+            users.username, 
+            COUNT(l.like_id) as like_count,
+            CASE WHEN EXISTS (SELECT 1 FROM likes WHERE comment_id = comments.comment_id AND user_id = ?) THEN 1 ELSE 0 END as is_liked
         FROM comments
         JOIN users ON comments.user_id = users.user_id
+        LEFT JOIN likes l ON comments.comment_id = l.comment_id
         WHERE comments.post_id = ?
-    ''', [str(post_id)])
+        GROUP BY comments.comment_id
+    ''', [user_credentials.get('oid'), str(post_id)])
 
     
     return render_template('posts/post.html', post=post, comments=comments, username=self_username)
@@ -220,7 +244,7 @@ def create_comment(post_id):
         title = request.form.get('title')
         content = request.form.get('body')
         # Get the current date and format it
-        created_at = datetime.now().strftime('%Y-%m-%d')
+        created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # Insert the post into the database
         query_db("INSERT INTO comments (title, body, user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)", [title, content, user_id, post_id, created_at], False, True)
@@ -230,21 +254,8 @@ def create_comment(post_id):
         # Handle case where user is not logged in
         return jsonify(success=False, error='User not logged in')
 
-# @app.route('/like/<int:post_id>/<action>')
-# @middleware_authentication # Check if logged in
-# def like_post(post_id, action, user_credentials):
-#     user_id = user_credentials.get('oid')
-#     if (action == 'like'):
-#          # Insert a new row into the likes table
-#         query_db("INSERT INTO likes (post_id, user_id) VALUES (?, ?)", [post_id, user_id], False, True)
-#     elif (action == 'unlike'):
-#         # Delete the row from the likes table
-#         query_db("DELETE FROM likes WHERE post_id = ? AND user_id = ?", [post_id, user_id], False, True)
-#     # Execute the query
 
-#     return redirect(request.referrer)
-
-@app.route('/like/<int:post_id>/<action>', methods=['POST'])
+@app.route('/likepost/<int:post_id>/<action>', methods=['POST'])
 @middleware_authentication
 def like_post(post_id, action, user_credentials):
     user_id = user_credentials.get('oid')
@@ -268,6 +279,29 @@ def like_post(post_id, action, user_credentials):
 
     return jsonify(success=success)
 
+@app.route('/likecomment/<int:comment_id>/<action>', methods=['POST'])
+@middleware_authentication
+def like_comment(comment_id, action, user_credentials):
+    user_id = user_credentials.get('oid')
+    success = False
+    
+    # Check if the user has already liked the post
+    existing_like = query_db("SELECT * FROM likes WHERE comment_id = ? AND user_id = ?", [comment_id, user_id], one=True)
+
+    if existing_like and action == 'like':
+        # User has already liked the post, prevent re-liking
+        success = False
+    else:
+        if action == 'like':
+            # Insert a new row into the likes table
+            query_db("INSERT INTO likes (comment_id, user_id) VALUES (?, ?)", [comment_id, user_id], False, True)
+            success = True
+        elif action == 'unlike':
+            # Delete the row from the likes table
+            query_db("DELETE FROM likes WHERE comment_id = ? AND user_id = ?", [comment_id, user_id], False, True)
+            success = True
+
+    return jsonify(success=success)
 
 # === USER DEFINED FUNCTIONS ===
 def fetch_posts(self_id, sort_by=None, limit=10, post_id=None, user_id=None):
@@ -311,6 +345,8 @@ def fetch_posts(self_id, sort_by=None, limit=10, post_id=None, user_id=None):
         result = query_db(query, params)
 
     return result
+
+
 
 
 

@@ -14,7 +14,10 @@
 
 
 
-
+.created_at {
+    font-size: 12px;
+    color: #999 !important;
+}
 
 .bottom-half {
     display: flex;
@@ -41,6 +44,10 @@
     display: flex;
     align-items: center;
 }
+.comment-button:hover {
+    text-decoration: none;
+}
+
 
 .like-button {
     display: flex;
@@ -48,18 +55,21 @@
     cursor: pointer;
 }
 
-.heart {
+.heart, .fa-comments {
     font-size: 1.5rem; /* Adjust size as needed */
-    transition: color 0.3s ease, transform 0.3s ease;
-    color: gray; /* Color for unliked state */
-    margin-right: 5px; /* Space between the heart icon and like count */
+    transition: color 0.3s ease, transform 0.3s ease, background-color 0.3s ease; /* Add background-color transition */
+    color: gray; /* Color for unliked/unhovered state */
+    margin-right: 5px; /* Space between the icon and like/comment count */
+    border-radius: 5px; /* Add rounded corners */
+    padding: 5px; /* Add padding to create space around the icon */
 }
 
-.fa-comments {
-    font-size: 1.5rem; /* Adjust size as needed */
-    transition: color 0.3s ease, transform 0.3s ease;
-    color: gray; /* Color for unliked state */
-    margin-right: 5px; /* Space between the heart icon and like count */
+.heart:hover {
+    background-color: rgba(255, 0, 0, 0.2); /* Red background color with opacity */
+}
+
+.fa-comments:hover {
+    background-color: rgba(0, 255, 0, 0.2); /* Green background color with opacity */
 }
 
 .heart.fa-solid {

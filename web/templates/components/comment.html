@@ -1,7 +1,76 @@
 <!-- post.html -->
-<div class="comment">
-    <h3>{{ comment.title }}</h3>
-    <p>{{ comment.body }}</p>
-    <p>Author: <a href="/user/{{ comment.username }}"> {{ comment.name }} - {{ comment.username }}</a></p>
-    <p>Created: {{ comment.created_at }}</p>
+<div class="container">
+    <div class="blog-grid">
+        <div class="blog-grid-text p-4">
+            <h3 class="h5 mb-3">{{ comment.title }}</h3>
+            <p class="display-30">{{ comment.body }}</p>
+            <div class="meta meta-style2">
+                <ul class="meta">
+                    <div class="top-half">
+                        <li><a href="/user/{{ post.username }}"> {{ comment.name }} - {{ comment.username }}</a> • <span class="created_at">{{ comment.created_at|parse_datetime }}</span></li>
+                    </div>
+                    <div class="bottom-half">
+                        <ul>
+                            <li>
+                                <div class="like-button" onclick="likeComment('{{ comment.comment_id }}', {{ comment.is_liked }}, this)">
+                                    <i class="fa-regular fa-heart {% if comment.is_liked %}fa-solid{% endif %} heart"></i>
+                                    <div class="like-count">{{ comment.like_count }}</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </ul>                
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    function likeComment(commentId, isLiked, clickedElement) {
+        const heartIcon = $(clickedElement).find('.heart');
+        const likeCountElement = $(clickedElement).find('.like-count');
+        let likeCount = parseInt(likeCountElement.text());
+        const currentLikeStatus = heartIcon.hasClass('fa-solid');
+
+        // Toggle the 'fa-solid' class for the heart icon
+        heartIcon.toggleClass('fa-solid');
+
+        // Update the like count
+        if (!currentLikeStatus) {
+            likeCount += 1;
+            heartIcon.removeClass('fa-regular');
+        } else {
+            likeCount -= 1;
+            heartIcon.addClass('fa-regular');
+        }
+        likeCountElement.text(likeCount);
+
+        // Prepare AJAX request data
+        const newLikeStatus = !currentLikeStatus;
+        const action = newLikeStatus ? 'like' : 'unlike';
+        const url = "/likecomment/" + commentId + "/" + action;
+        console.log(action)
+
+        // Send an AJAX request to handle the like/unlike action
+        $.ajax({
+            url: url,
+            type: 'POST',
+            success: function(data) {
+                if (!data.success) {
+                    // Revert like count and icon state if request failed
+                    heartIcon.toggleClass('fa-solid');
+                    heartIcon.toggleClass('fa-regular');
+                    likeCount = newLikeStatus ? likeCount - 1 : likeCount + 1;
+                    likeCountElement.text(likeCount);
+                }
+            },
+            error: function() {
+                // Revert like count and icon state if request failed
+                heartIcon.toggleClass('fa-solid');
+                heartIcon.toggleClass('fa-regular');
+                likeCount = newLikeStatus ? likeCount - 1 : likeCount + 1;
+                likeCountElement.text(likeCount);
+            }
+        });
+    }
+</script>

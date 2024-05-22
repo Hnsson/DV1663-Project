@@ -4,6 +4,6 @@
     box-sizing: border-box;
 }
 
-.comments > :nth-child(odd) {
-    background-color: #f0f0f0;
+.comments > :nth-child(odd) .blog-grid-text {
+    background-color: #fffbfb;
 }

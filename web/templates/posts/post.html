@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
+    <title>Post: {{ post.post_id }}</title>
 
     <link rel="stylesheet" href="/css/components/post.css">
     <link rel="stylesheet" href="/css/components/comment.css">
@@ -35,7 +35,10 @@
     <hr class="hr hr-blurry" />
 
     <h2>Comments</h2>
-    <div class="comments">
+    <div class="comments" id="comments">
+        {% if not comments %}
+            <p>No comments yet. Post one!</p>
+        {% endif %}
         {% for comment in comments %}
             {% include 'components/comment.html' %}
         {% endfor %}
