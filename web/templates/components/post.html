@@ -1,9 +1,5 @@
 <!-- post.html -->
-<!-- <link rel="stylesheet" href="/css/post.css"> -->
 <link rel="stylesheet" href="/css/components/post.css">
-<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous"> -->
-<!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script> -->
-<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script> -->
 
 <div class="container">
     <div class="blog-grid">
@@ -18,14 +14,20 @@
                         <li><a href="/user/{{ post.username }}"> {{ post.name }} - {{ post.username }}</a></li>
                     </div>
                     <div class="bottom-half">
-                        <li><i class="fas fa-comments"></i> {{ post.comment_count }}</li>
-                        <li>
-                            <i class="fas heart {% if post.is_liked %}is-active{% endif %}" 
-                            data-is-liked="{{ post.is_liked }}" 
-                            onclick="likePost('{{ post.post_id }}', {{ post.is_liked }}, this)">
-                                <div class="like-count">{{ post.like_count }}</div>
-                            </i>
-                        </li>
+                        <ul>
+                            <li>
+                                <div class="comment-button">
+                                    <i class="fas fa-comments"></i>
+                                    <div class="comment-count">{{ post.comment_count }}</div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="like-button" onclick="likePost('{{ post.post_id }}', {{ post.is_liked }}, this)">
+                                    <i class="fa-regular fa-heart {% if post.is_liked %}fa-solid{% endif %} heart"></i>
+                                    <div class="like-count">{{ post.like_count }}</div>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
                 </ul>                
             </div>
@@ -35,29 +37,48 @@
 
 <script>
     function likePost(postId, isLiked, clickedElement) {
-        // Toggle 'is-active' class on the clicked heart icon
-        $(clickedElement).toggleClass("is-active");
-        // Get the current like status from the data attribute
-        var currentLikeStatus = $(clickedElement).data("is-liked");
-        var newLikeStatus = !currentLikeStatus;
-        // Set the new like status to the data attribute for next click
-        $(clickedElement).data("is-liked", newLikeStatus);
-        // Determine the action based on the new like status
-        var action = newLikeStatus ? 'like' : 'unlike';
-        var url = "/like/" + postId + "/" + action;
+        const heartIcon = $(clickedElement).find('.heart');
+        const likeCountElement = $(clickedElement).find('.like-count');
+        let likeCount = parseInt(likeCountElement.text());
+        const currentLikeStatus = heartIcon.hasClass('fa-solid');
+
+        // Toggle the 'fa-solid' class for the heart icon
+        heartIcon.toggleClass('fa-solid');
+
+        // Update the like count
+        if (!currentLikeStatus) {
+            likeCount += 1;
+            heartIcon.removeClass('fa-regular');
+        } else {
+            likeCount -= 1;
+            heartIcon.addClass('fa-regular');
+        }
+        likeCountElement.text(likeCount);
+
+        // Prepare AJAX request data
+        const newLikeStatus = !currentLikeStatus;
+        const action = newLikeStatus ? 'like' : 'unlike';
+        const url = "/like/" + postId + "/" + action;
 
         // Send an AJAX request to handle the like/unlike action
         $.ajax({
             url: url,
             type: 'POST',
             success: function(data) {
-                if (data.success) {
-                    // Update the like count displayed next to the button
-                    var likeCountElement = $(clickedElement);
-                    var likeCount = parseInt(likeCountElement.text());
-                    likeCount = newLikeStatus ? likeCount + 1 : likeCount - 1;
+                if (!data.success) {
+                    // Revert like count and icon state if request failed
+                    heartIcon.toggleClass('fa-solid');
+                    heartIcon.toggleClass('fa-regular');
+                    likeCount = newLikeStatus ? likeCount - 1 : likeCount + 1;
                     likeCountElement.text(likeCount);
                 }
+            },
+            error: function() {
+                // Revert like count and icon state if request failed
+                heartIcon.toggleClass('fa-solid');
+                heartIcon.toggleClass('fa-regular');
+                likeCount = newLikeStatus ? likeCount - 1 : likeCount + 1;
+                likeCountElement.text(likeCount);
             }
         });
     }
