@@ -313,24 +313,9 @@ def delete_post(post_id, user_credentials):
     existing_post = query_db("SELECT * FROM posts WHERE post_id = ? AND user_id = ?", [post_id, user_id], one=True)
 
     if existing_post:
-        try: # For some reason ON DELETE CASCADE does not recognize if you delete from python, only worked with SQLiteStudio
-            # Step 1: Retrieve all comment IDs associated with the post
-            comment_ids = query_db("SELECT comment_id FROM comments WHERE post_id = ?", [post_id])
-            comment_ids = [comment['comment_id'] for comment in comment_ids]
-
-            # Step 2: Delete likes associated with these comment IDs
-            if comment_ids:
-                query_db("DELETE FROM likes WHERE comment_id IN ({})".format(','.join('?' * len(comment_ids))), comment_ids, False, True)
-
-            # Step 3: Delete comments associated with the post
-            query_db("DELETE FROM comments WHERE post_id = ?", [post_id], False, True)
-            
-            # Step 4: Delete likes associated with the post
-            query_db("DELETE FROM likes WHERE post_id = ?", [post_id], False, True)
-            
-            # Step 5: Delete the post itself
+        try:
+            # Due to enabled ON DELETE CASCADING on the likes and comments related to this post_id, everything will be deleted correctly when deleting the post itself
             query_db("DELETE FROM posts WHERE post_id = ?", [post_id], False, True)
-
             success = True
         except Exception as e:
             print("An error occurred while deleting the post and associated data:", e)
