@@ -61,10 +61,13 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.04);
 }
 .form-container .form-group label {
     font-weight: bold;
+}
+.form-container .form-control::placeholder {
+    color:rgb(172, 172, 172);
 }
 .form-container button {
     width: 100%;
@@ -82,12 +85,12 @@
     left: -75%;
     width: 50%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.125);
     transform: skewX(-25deg);
     transition: all 0.5s ease-in-out;
 }
 .form-container button:hover {
-    background-color: #68aff1;
+    background-color: #4ba4e8;
 }
 .form-container button:hover::before {
     left: 125%;

@@ -15,34 +15,44 @@
 <body>
     {% include 'components/navbar.html' %}
 
-    {% with post=post %}
-        {% include 'components/post.html' %}
-    {% endwith %}
 
-    <h2>Post a comment</h2>
-    <form id="commentForm" class="col-md-8 mx-auto" action="/post/{{post.post_id}}/create-comment" method="POST">
-        <div class="form-group">
-            <label for="title">Title</label>
-            <input type="text" class="form-control" id="title" name="title" required>
-        </div>
-        <div class="form-group">
-            <label for="content">Comment</label>
-            <textarea class="form-control" id="body" name="body" rows="3"  placeholder="What's on your mind?" required></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Create Comment</button>
-    </form>
-
-    <hr class="hr hr-blurry" />
-
-    <h2>Comments</h2>
-    <div class="comments" id="comments">
-        {% if not comments %}
-            <p>No comments yet. Post one!</p>
-        {% endif %}
-        {% for comment in comments %}
-            {% include 'components/comment.html' %}
-        {% endfor %}
+    <div class="container my-4">
+        {% with post=post %}
+            {% include 'components/post.html' %}
+        {% endwith %}
     </div>
+
+    <div class="container my-5">
+        <div class="col-md-8 mx-auto form-container">
+            <form id="commentForm" action="/post/{{post.post_id}}/create-comment" method="POST">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" class="form-control" id="title" name="title" placeholder="Write a catchy title!" required>
+                </div>
+                <div class="form-group">
+                    <label for="content">Comment</label>
+                    <textarea class="form-control" id="body" name="body" rows="3" placeholder="What do you think of this post?" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Comment</button>
+            </form>  
+        </div>
+    </div>
+    
+
+    <hr class="hr hr-blurry" id="comments"/>
+
+    <div class="container my-5">
+        <h2 class="mb-4 title">Comments</h2>
+        <div class="comments">
+            {% if not comments %}
+                <p>No comments yet. Post one!</p>
+            {% endif %}
+            {% for comment in comments %}
+                {% include 'components/comment.html' %}
+            {% endfor %}
+        </div>
+    </div>
+
 
     <script>
         // Handle form submission asynchronously

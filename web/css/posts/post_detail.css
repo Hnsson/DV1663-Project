@@ -1,9 +1,58 @@
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-.comments > :nth-child(odd) .blog-grid-text {
-    background-color: #fffbfb;
+.title {
+    text-transform: uppercase;
+    color: rgb(195, 195, 195);
+    font-weight: bold;
+}
+
+
+/* Form Container Styles */
+.form-container {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.04);
+}
+
+.form-container .form-group label {
+    display: block;
+    font-weight: bold;
+}
+
+.form-container .form-control::placeholder {
+    color: rgb(172, 172, 172);
+}
+
+.form-container button {
+    width: 100%;
+    font-size: 16px;
+    position: relative;
+    overflow: hidden;
+    background-color: #378ddb;
+    color: white;
+    border: none;
+}
+.form-container button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.125);
+    transform: skewX(-25deg);
+    transition: all 0.5s ease-in-out;
+}
+.form-container button:hover {
+    background-color: #4ba4e8;
+}
+.form-container button:hover::before {
+    left: 125%;
 }
