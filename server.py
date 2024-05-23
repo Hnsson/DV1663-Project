@@ -129,9 +129,10 @@ def index():
             fetch_count = (10 * (page + 1))
             exists_more = True;
 
-            posts = fetch_posts(self_id=user_info.get('oid'), sort_by=sort_option, limit=fetch_count)
+            posts = fetch_posts(self_id=user_info.get('oid'), sort_by=sort_option, limit=fetch_count+1)
             
-            if fetch_count > len(posts):
+            print(fetch_count, " : ", len(posts))
+            if fetch_count >= len(posts):
                 exists_more = False
 
             return render_template('index.html', _self=user_info, email=user_email, posts=posts, sort_by=sort_option, exists_more=exists_more, page=page)
