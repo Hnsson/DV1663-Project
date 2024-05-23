@@ -8,6 +8,7 @@ def get_db():
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
         db.row_factory = sqlite3.Row
+        db.execute("PRAGMA foreign_keys = ON")  # Enable foreign key support
     return db
 
 def close_db(exception=None):
@@ -15,16 +16,12 @@ def close_db(exception=None):
     if db is not None:
         db.close()
 
-
 # ---------------- QUERYING FUNCTIONS --------------
 def query_db(query, args=(), one=False, commit=False):
+    db = get_db()
+    cur = db.execute(query, args)
     if commit:
-        db = get_db()
-        cur = db.execute(query, args)
         db.commit()
-        cur.close
-        return None
-    cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
     return (rv[0] if rv else None) if one else rv

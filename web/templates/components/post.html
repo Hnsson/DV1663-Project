@@ -13,20 +13,21 @@
                         <li><a href="/user/{{ post.username }}"> {{ post.name }} - @{{ post.username }}</a> • <span class="created_at">{{ post.created_at|parse_datetime }}</span></li>
                     </div>
                     <div class="bottom-half">
-                        <ul>
-                            <li>
-                                <a class="comment-button" href="/user/{{ post.username }}/post/{{ post.post_id }}#comments">
-                                    <i class="fas fa-comments"></i>
-                                    <div class="comment-count">{{ post.comment_count }}</div>
-                                </a>
-                            </li>
-                            <li>
-                                <div class="like-button" onclick="likePost('{{ post.post_id }}', {{ post.is_liked }}, this)">
-                                    <i class="fa-regular fa-heart {% if post.is_liked %}fa-solid{% endif %} heart"></i>
-                                    <div class="like-count">{{ post.like_count }}</div>
-                                </div>
-                            </li>
-                        </ul>
+                        <div class="left-buttons">
+                            <a class="comment-button" href="/user/{{ post.username }}/post/{{ post.post_id }}#comments">
+                                <i class="fas fa-comments"></i>
+                                <div class="comment-count">{{ post.comment_count }}</div>
+                            </a>
+                            <div class="like-button" onclick="likePost('{{ post.post_id }}', {{ post.is_liked }}, this)">
+                                <i class="fa-regular fa-heart {% if post.is_liked %}fa-solid{% endif %} heart"></i>
+                                <div class="like-count">{{ post.like_count }}</div>
+                            </div>
+                        </div>
+                        {% if post.user_id == _self.oid %}
+                        <div class="remove-button" onclick="deletePost('{{ post.post_id }}', this)">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                        {% endif %}
                     </div>
                 </ul>                
             </div>
@@ -35,6 +36,30 @@
 </div>
 
 <script>
+    function deletePost(postId, clickedElement) {
+        if (!confirm("Are you sure you want to delete this post?")) {
+            return; // If the user cancels, do nothing
+        }
+        const postElement = $(clickedElement).closest('.blog-grid');
+        const url = "/delete-post/" + postId;
+
+        // Send an AJAX request to delete the post
+        $.ajax({
+            url: url,
+            type: 'POST',
+            success: function(data) {
+                if (data.success) {
+                    // Remove the post element from the page
+                    location.reload();
+                }
+            },
+            error: function() {
+                // Show an alert if the request fails
+                alert("Failed to delete post. Please try again later.");
+            }
+        });
+    }
+
     function likePost(postId, isLiked, clickedElement) {
         const heartIcon = $(clickedElement).find('.heart');
         const likeCountElement = $(clickedElement).find('.like-count');

@@ -25,38 +25,23 @@
     gap: 20px; /* Adjust the spacing between the comment and like button */
 }
 
-.bottom-half ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.bottom-half li {
+.left-buttons {
     display: flex;
     align-items: center;
 }
 
-
-.comment-button {
+.comment-button, .like-button, .remove-button {
     display: flex;
     align-items: center;
+    cursor: pointer;
 }
 .comment-button:hover {
     text-decoration: none;
 }
 
 
-.like-button {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-.heart, .fa-comments {
-    font-size: 1.5rem; /* Adjust size as needed */
+.heart, .fa-comments, .fa-trash {
+    font-size: 1rem; /* Adjust size as needed */
     transition: color 0.3s ease, transform 0.3s ease, background-color 0.3s ease; /* Add background-color transition */
     color: gray; /* Color for unliked/unhovered state */
     margin-right: 5px; /* Space between the icon and like/comment count */
@@ -64,8 +49,16 @@
     padding: 5px; /* Add padding to create space around the icon */
 }
 
-.heart:hover {
+.fa-trash {
+    justify-self: flex-end;
+}
+
+.heart:hover, .fa-trash:hover {
     background-color: rgba(255, 0, 0, 0.2); /* Red background color with opacity */
+}
+
+.fa-trash:hover {
+    color: red;
 }
 
 .fa-comments:hover {
@@ -78,19 +71,27 @@
 }
 
 
-.comment-count {
-    font-size: 1rem;
-    color: black;
+.comment-count, .like-count {
+    font-size: .9rem;
+    color: rgb(86, 78, 78);
     transition: opacity 0.3s ease;
     min-width: 20px; /* Minimum width to prevent shifting */
     text-align: left;
 }
-.like-count {
-    font-size: 1rem;
-    color: black;
-    transition: opacity 0.3s ease;
-    min-width: 20px; /* Minimum width to prevent shifting */
-    text-align: left;
+
+.remove-button {
+    margin-left: auto;
+}
+.remove-post {
+    font-size: 1.5rem; /* Adjust size as needed */
+    transition: color 0.3s ease, transform 0.3s ease, background-color 0.3s ease; /* Add background-color transition */
+    color: gray; /* Color for unliked/unhovered state */
+    margin-right: 5px; /* Space between the icon and like/comment count */
+    border-radius: 5px; /* Add rounded corners */
+    padding: 5px; /* Add padding to create space around the icon */
+}
+.hremove-post:hover {
+    background-color: rgba(255, 0, 0, 0.2); /* Red background color with opacity */
 }
 
 
