@@ -123,6 +123,7 @@ def index():
         user_email = user_info.get('email', 'No email found')
         if user_email and user_email.endswith('@student.bth.se'):
             # Fetch posts, default should be based on recent posts
+            user_info['username'] = user_info.get('email', '').split('@')[0]
             sort_option = request.args.get('sort_by', 'recent')
             page = int(request.args.get('page', 0))
             fetch_count = (10 * (page + 1))
@@ -132,7 +133,8 @@ def index():
             
             if fetch_count > len(posts):
                 exists_more = False
-            return render_template('index.html', user=user_info, email=user_email, username=user_email.split('@')[0], posts=posts, sort_by=sort_option, exists_more=exists_more, page=page)
+
+            return render_template('index.html', _self=user_info, email=user_email, posts=posts, sort_by=sort_option, exists_more=exists_more, page=page)
         else:
             session.clear()
             error_message = "Unauthorized email domain. Access is restricted to @student.bth.se emails."
@@ -145,7 +147,7 @@ def index():
 @app.route('/user/<username>/post/<int:post_id>', methods=['GET'])
 @middleware_authentication # Check if logged in
 def get_user_post(username, post_id, user_credentials): # The user_credentials is sent from middleware_authentication
-    self_username = user_credentials.get('email', '').split('@')[0]
+    user_credentials['username'] = user_credentials.get('email', '').split('@')[0]
     # Retrieve the post from the database and join with the user that posted to recieve info
 
     post = fetch_posts(self_id=user_credentials.get('oid'), post_id=post_id, limit=1)
@@ -163,16 +165,16 @@ def get_user_post(username, post_id, user_credentials): # The user_credentials i
         LEFT JOIN likes l ON comments.comment_id = l.comment_id
         WHERE comments.post_id = ?
         GROUP BY comments.comment_id
-    ''', [user_credentials.get('oid'), str(post_id)])
+    ''', [user_credentials.get('oid'), post_id])
 
     
-    return render_template('posts/post.html', post=post, comments=comments, username=self_username)
+    return render_template('posts/post.html', _self=user_credentials, post=post, comments=comments)
 
 # Get specific user page
 @app.route('/user/<username>', methods=['GET'])
 @middleware_authentication # Check if logged in
 def get_user(username, user_credentials): # The user_credentials is sent from middleware_authentication
-    self_username = user_credentials.get('email', '').split('@')[0]
+    user_credentials['username'] = user_credentials.get('email', '').split('@')[0]
 
     user = query_db('SELECT * FROM users WHERE username = ?', [username], one=True)
     if user is None:
@@ -181,14 +183,14 @@ def get_user(username, user_credentials): # The user_credentials is sent from mi
     # posts = fetch_posts(self_id=user_credentials.get('oid'))
     posts = fetch_posts(self_id=user_credentials.get('oid'), user_id=user['user_id'])
     
-    return render_template('users/user.html', user=user, posts=posts, username=self_username)
+    return render_template('users/user.html', _self=user_credentials, user=user, posts=posts)
 
 @app.route('/search', methods=['GET'])
 @middleware_authentication # Check if logged in
 def search(user_credentials):
+    user_credentials['username'] = user_credentials.get('email', '').split('@')[0]
     search_query = request.args.get('q');
 
-    print(search_query);
     # Check if query contains '@' symbol for username search instead of name search
     if search_query[0] == '@':
         # Search by username
@@ -196,12 +198,12 @@ def search(user_credentials):
         print(search_query);
         user = query_db('SELECT * FROM users WHERE username = ?', [search_query], one=True)
 
-        return render_template('search/search_results.html', users=[user] if user else [])
+        return render_template('search/search_results.html', _self=user_credentials, users=[user] if user else [])
     else:
         # Search by name (matching partial names)
         users = query_db("SELECT * FROM users WHERE name LIKE ? OR username LIKE ?", [f'%{search_query}%', f'%{search_query}%'])
         
-        return render_template('search/search_results.html', users=users if users else [])
+        return render_template('search/search_results.html', _self=user_credentials, users=users if users else [])
 
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -235,7 +237,7 @@ def create_post():
 
         return redirect(url_for('index'))
 
-@app.route('/post/<post_id>/create-comment', methods=['POST'])
+@app.route('/post/<int:post_id>/create-comment', methods=['POST'])
 def create_comment(post_id):
     if 'user' in session:
         user = session['user']
@@ -299,6 +301,39 @@ def like_comment(comment_id, action, user_credentials):
             # Delete the row from the likes table
             query_db("DELETE FROM likes WHERE comment_id = ? AND user_id = ?", [comment_id, user_id], False, True)
             success = True
+
+    return jsonify(success=success)
+
+@app.route('/delete-post/<int:post_id>', methods=['POST'])
+@middleware_authentication
+def delete_post(post_id, user_credentials):
+    user_id = user_credentials.get('oid')
+    success = False
+
+    existing_post = query_db("SELECT * FROM posts WHERE post_id = ? AND user_id = ?", [post_id, user_id], one=True)
+
+    if existing_post:
+        try: # For some reason ON DELETE CASCADE does not recognize if you delete from python, only worked with SQLiteStudio
+            # Step 1: Retrieve all comment IDs associated with the post
+            comment_ids = query_db("SELECT comment_id FROM comments WHERE post_id = ?", [post_id])
+            comment_ids = [comment['comment_id'] for comment in comment_ids]
+
+            # Step 2: Delete likes associated with these comment IDs
+            if comment_ids:
+                query_db("DELETE FROM likes WHERE comment_id IN ({})".format(','.join('?' * len(comment_ids))), comment_ids, False, True)
+
+            # Step 3: Delete comments associated with the post
+            query_db("DELETE FROM comments WHERE post_id = ?", [post_id], False, True)
+            
+            # Step 4: Delete likes associated with the post
+            query_db("DELETE FROM likes WHERE post_id = ?", [post_id], False, True)
+            
+            # Step 5: Delete the post itself
+            query_db("DELETE FROM posts WHERE post_id = ?", [post_id], False, True)
+
+            success = True
+        except Exception as e:
+            print("An error occurred while deleting the post and associated data:", e)
 
     return jsonify(success=success)
 

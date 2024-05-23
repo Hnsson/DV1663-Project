@@ -17,11 +17,11 @@
     </div>
     {% endif %}
 
-    {% if user %}
+    {% if _self %}
     <div class="banner">
       <div class="py-5 text-center">
-        <h1>Welcome, {{ user.get('name', 'Guest') }}</h1>
-        <p>@{{ username }}</p>
+        <h1>Welcome, {{ _self.name }}</h1>
+        <p>@{{ _self.username }}</p>
       </div>
     </div>
 
