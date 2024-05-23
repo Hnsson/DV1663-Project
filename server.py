@@ -402,12 +402,16 @@ def page_not_found(error):
 
 
 
-@app.route('/clear_notifications')
+@app.route('/clear_notifications', methods=['GET', 'POST'])
 def clear_notifications():
-    user = session.get('user')
-    user_id = user.get('oid')
-    query_db("UPDATE notifications SET read = 1 WHERE user_id = ?", [user_id], commit=True)
-    return jsonify(success=True)
+    if request.method == 'POST' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        user = session.get('user')
+        user_id = user.get('oid')
+        query_db("UPDATE notifications SET read = 1 WHERE user_id = ?", [user_id], commit=True)
+        return jsonify(success=True)
+    else:
+        # Handle regular GET request (if needed)
+        pass
 
 @app.context_processor
 def inject_unread_notification_count():

@@ -57,18 +57,18 @@ $(document).ready(function() {
                 let dropdown = $('#notificationList');
                 let notificationCount = $('#notificationCount');
                 let clearNotificationsUrl = '/clear_notifications';
-                let notification_check = 0;
                 dropdown.empty(); // Clear existing notifications
                 notificationCount.text(count); // Update notification count
 
                 if (notifications.length > 0) {
                     notifications.forEach(function(notification) {
-                        dropdown.append(`<a class="dropdown-item" href="#">${notification.message}</a>`);
+                        dropdown.append(`<a class="dropdown-item" href="javascript:void(0);">${notification.message}</a>`);
                     });
                     dropdown.append(`<a class="dropdown-item mark-as-read" href="${clearNotificationsUrl}">Mark all as read</a>`);
                 } else {
-                    dropdown.append('<a class="dropdown-item" href="#">No new notifications</a>');
+                    dropdown.append('<span class="no-notifications">No new notifications</span>');
                 }
+                
                 
             }
         });
@@ -80,25 +80,31 @@ $(document).ready(function() {
             type: 'GET',
             success: function(response) {
                 if (response.success) {
-                    // Optionally update UI to indicate notifications were cleared
+                    // Update UI to indicate notifications were cleared
+                    $('#notificationCount').text('0'); // Update notification count to 0
                     console.log('Notifications cleared successfully.');
+                    // Fetch notifications again to update the dropdown
+                    fetchNotifications();
                 } else {
                     console.error('Failed to clear notifications.');
                 }
             },
             error: function(xhr, status, error) {
                 console.error('Error clearing notifications:', error);
-            }
-        });
-    }
+              }
+          });
+      } 
 
     fetchNotifications();
     setInterval(fetchNotifications, 300000); // Adjust interval as needed
 
-    $('#clearNotificationsButton').on('click', function() {
+    $(document).on('click', '.mark-as-read', function(event) {
+        event.preventDefault();
         clearNotifications();
     });
 });
+
+
 
 </script>
 
