@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, abort, jsonify, send_from_directory, redirect, session, url_for
+from database import get_unread_notifications
 from msal import ConfidentialClientApplication
 import os
 import uuid
@@ -247,7 +248,16 @@ def create_comment(post_id):
 
         # Insert the post into the database
         query_db("INSERT INTO comments (title, body, user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)", [title, content, user_id, post_id, created_at], False, True)
-        # Return JSON response indicating success
+        # Fetch the post owner's ID
+        post_owner_id = query_db("SELECT user_id FROM posts WHERE post_id = ?", [post_id], one=True)['user_id']
+
+    # Check if the commenter is not the post owner to avoid self-notifications
+        # if post_owner_id != user_id:
+            # Create a notification for the post owner
+        message = f"Your post received a new comment: {content[:30]}..."  # Preview of the comment
+        query_db("INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+                [post_owner_id, message], commit=True)
+            # Return JSON response indicating success
         return jsonify(success=True)
     else:
         # Handle case where user is not logged in
@@ -370,6 +380,34 @@ def page_not_found(error):
     return render_template('error/error.html', title='404 - Page not found.', code=404, message=error), 404
 
 
+
+@app.route('/clear_notifications')
+def clear_notifications():
+    user = session.get('user')
+    user_id = user.get('oid')
+    query_db("UPDATE notifications SET read = 1 WHERE user_id = ?", [user_id], commit=True)
+    return jsonify(success=True)
+
+@app.context_processor
+def inject_unread_notification_count():
+    if 'user_id' in session:
+        unread_count = query_db("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read = 0",
+                                [session['user_id']], one=True)[0]
+        return {'unread_notification_count': unread_count}
+    return {'unread_notification_count': 0}
+
+@app.route('/notifications/fetch')
+def fetch_notifications():
+    user = session.get('user')
+    if user:
+        user_id = user.get('oid')
+        notifications = query_db("SELECT message, created_at FROM notifications WHERE user_id = ? AND read = 0 ORDER BY created_at DESC", [user_id])
+        notification_count = len(notifications)  # Get the count of notifications
+        return jsonify({
+            'notifications': [{'message': n['message'], 'created_at': datetime.strptime(n['created_at'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')} for n in notifications],
+            'count': notification_count
+        })
+    return jsonify({'notifications': [], 'count': 0})
 
 
 # Start app

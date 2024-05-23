@@ -29,6 +29,8 @@ def query_db(query, args=(), one=False, commit=False):
     cur.close()
     return (rv[0] if rv else None) if one else rv
 
+def get_unread_notifications(user_id):
+    return query_db("SELECT * FROM notifications WHERE user_id = ? AND read = 0", [user_id])
 
 # When teardown context we close the database.
 def init_db(app):
