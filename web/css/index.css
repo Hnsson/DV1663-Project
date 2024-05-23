@@ -113,3 +113,38 @@
     width: auto; /* Adjust the width to fit the content */
     min-width: 120px; /* Ensure minimum width for better visibility */
 }
+
+
+
+
+
+
+.exists a {
+    font-size: 16px;
+    position: relative;
+    overflow: hidden;
+    background-color: #378ddb;
+    color: white;
+    border: none;
+}
+.exists a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.125);
+    transform: skewX(-25deg);
+    transition: all 0.5s ease-in-out;
+}
+.exists a:hover {
+    background-color: #4ba4e8;
+}
+.exists a:hover::before {
+    left: 125%;
+}
+
+.not_exists {
+    color: rgb(210, 210, 210);
+}

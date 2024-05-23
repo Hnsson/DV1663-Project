@@ -124,8 +124,15 @@ def index():
         if user_email and user_email.endswith('@student.bth.se'):
             # Fetch posts, default should be based on recent posts
             sort_option = request.args.get('sort_by', 'recent')
-            posts = fetch_posts(self_id=user_info.get('oid'), sort_by=sort_option)
-            return render_template('index.html', user=user_info, email=user_email, username=user_email.split('@')[0], posts=posts, sort_by=sort_option)
+            page = int(request.args.get('page', 0))
+            fetch_count = (10 * (page + 1))
+            exists_more = True;
+
+            posts = fetch_posts(self_id=user_info.get('oid'), sort_by=sort_option, limit=fetch_count)
+            
+            if fetch_count > len(posts):
+                exists_more = False
+            return render_template('index.html', user=user_info, email=user_email, username=user_email.split('@')[0], posts=posts, sort_by=sort_option, exists_more=exists_more, page=page)
         else:
             session.clear()
             error_message = "Unauthorized email domain. Access is restricted to @student.bth.se emails."
@@ -144,14 +151,6 @@ def get_user_post(username, post_id, user_credentials): # The user_credentials i
     post = fetch_posts(self_id=user_credentials.get('oid'), post_id=post_id, limit=1)
     if post is None:
         abort(404)
-
-    # Retrieve the comments and join with the user that commented to recieve username
-    # comments = query_db('''
-    #     SELECT comments.*, users.name, users.username
-    #     FROM comments
-    #     JOIN users ON comments.user_id = users.user_id
-    #     WHERE comments.post_id = ?
-    # ''', [str(post_id)])
 
     comments = query_db('''
         SELECT comments.*, 
