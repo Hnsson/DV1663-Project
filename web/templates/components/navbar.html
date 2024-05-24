@@ -62,7 +62,7 @@ $(document).ready(function() {
 
                 if (notifications.length > 0) {
                     notifications.forEach(function(notification) {
-                        dropdown.append(`<a class="dropdown-item" href="javascript:void(0);">${notification.message}</a>`);
+                        dropdown.append(`<a class="dropdown-item" href="${notification.post_route}">${notification.message}</a>`);
                     });
                     dropdown.append(`<a class="dropdown-item mark-as-read" href="${clearNotificationsUrl}">Mark all as read</a>`);
                 } else {

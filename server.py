@@ -257,9 +257,9 @@ def create_comment(post_id):
     # Check if the commenter is not the post owner to avoid self-notifications
         # if post_owner_id != user_id:
             # Create a notification for the post owner
-        message = f"Your post received a new comment: {content[:30]}..."  # Preview of the comment
-        query_db("INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-                [post_owner_id, message], commit=True)
+        # message = f"Your post received a new comment: {content[:30]}..."  # Preview of the comment
+        # query_db("INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+        #         [post_owner_id, message], commit=True)
             # Return JSON response indicating success
         return jsonify(success=True)
     else:
@@ -426,10 +426,12 @@ def fetch_notifications():
     user = session.get('user')
     if user:
         user_id = user.get('oid')
-        notifications = query_db("SELECT message, created_at FROM notifications WHERE user_id = ? AND read = 0 ORDER BY created_at DESC", [user_id])
+        notifications = query_db("SELECT message, created_at, post_route FROM notifications WHERE user_id = ? AND read = 0 ORDER BY created_at DESC", [user_id])
         notification_count = len(notifications)  # Get the count of notifications
         return jsonify({
-            'notifications': [{'message': n['message'], 'created_at': datetime.strptime(n['created_at'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')} for n in notifications],
+            'notifications': [{'message': n['message'], 'created_at': datetime.strptime(n['created_at'], 
+            '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S'), 'post_route': n['post_route']} 
+            for n in notifications],
             'count': notification_count
         })
     return jsonify({'notifications': [], 'count': 0})
