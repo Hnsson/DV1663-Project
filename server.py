@@ -94,11 +94,6 @@ def authorized():
         # Error
         print("Error acquiring token:", result.get("error"), result.get("error_description"))
         return "Authentication failed", 500
-    # code = request.args.get('code')
-    # result = msal_app.acquire_token_by_authorization_code(code, scopes=SCOPE, redirect_uri="https://localhost:8080/getAToken")
-    # session['user'] = result.get('id_token_claims')
-    # received_user = request.args.get('state')
-    # return redirect(url_for('index'))
 
 
 # === GET Requests ===
@@ -132,7 +127,6 @@ def index():
 
             posts = fetch_posts(self_id=user_info.get('oid'), sort_by=sort_option, limit=fetch_count+1)
             
-            print(fetch_count, " : ", len(posts))
             if fetch_count >= len(posts):
                 exists_more = False
 
@@ -167,6 +161,7 @@ def get_user_post(username, post_id, user_credentials): # The user_credentials i
         LEFT JOIN likes l ON comments.comment_id = l.comment_id
         WHERE comments.post_id = ?
         GROUP BY comments.comment_id
+        ORDER BY comments.created_at DESC
     ''', [user_credentials.get('oid'), post_id])
 
     
@@ -197,7 +192,7 @@ def search(user_credentials):
     if search_query[0] == '@':
         # Search by username
         search_query = search_query[1:];
-        print(search_query);
+
         user = query_db('SELECT * FROM users WHERE username = ?', [search_query], one=True)
 
         return render_template('search/search_results.html', _self=user_credentials, users=[user] if user else [])
@@ -251,16 +246,7 @@ def create_comment(post_id):
 
         # Insert the post into the database
         query_db("INSERT INTO comments (title, body, user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)", [title, content, user_id, post_id, created_at], False, True)
-        # Fetch the post owner's ID
-        post_owner_id = query_db("SELECT user_id FROM posts WHERE post_id = ?", [post_id], one=True)['user_id']
 
-    # Check if the commenter is not the post owner to avoid self-notifications
-        # if post_owner_id != user_id:
-            # Create a notification for the post owner
-        # message = f"Your post received a new comment: {content[:30]}..."  # Preview of the comment
-        # query_db("INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-        #         [post_owner_id, message], commit=True)
-            # Return JSON response indicating success
         return jsonify(success=True)
     else:
         # Handle case where user is not logged in
@@ -332,6 +318,27 @@ def delete_post(post_id, user_credentials):
             print("An error occurred while deleting the post and associated data:", e)
 
     return jsonify(success=success)
+
+
+@app.route('/delete-comment/<int:comment_id>', methods=['POST'])
+@middleware_authentication
+def delete_comment(comment_id, user_credentials):
+    user_id = user_credentials.get('oid')
+    success = False
+
+    existing_post = query_db("SELECT * FROM comments WHERE comment_id = ? AND user_id = ?", [comment_id, user_id], one=True)
+
+    if existing_post:
+        try:
+            # Due to enabled ON DELETE CASCADING on the likes and comments related to this post_id, everything will be deleted correctly when deleting the post itself
+            query_db("DELETE FROM comments WHERE comment_id = ?", [comment_id], False, True)
+            success = True
+        except Exception as e:
+            print("An error occurred while deleting the post and associated data:", e)
+
+    return jsonify(success=success)
+
+
 
 # === USER DEFINED FUNCTIONS ===
 def fetch_posts(self_id, sort_by=None, limit=10, post_id=None, user_id=None):
