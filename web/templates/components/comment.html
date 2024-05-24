@@ -1,6 +1,6 @@
 <!-- post.html -->
 <div class="container">
-    <div class="blog-grid">
+    <div class="blog-grid" id="comment_{{ comment.comment_id }}">
         <div class="blog-grid-text p-4">
             <h3 class="h5 mb-3">{{ comment.title }}</h3>
             <p class="display-30">{{ comment.body }}</p>
@@ -17,6 +17,13 @@
                                     <div class="like-count">{{ comment.like_count }}</div>
                                 </div>
                             </li>
+                            {% if comment.user_id == _self.oid %}
+                            <li>
+                                <div class="remove-button" onclick="deleteComment('{{ comment.comment_id }}', this)">
+                                    <i class="fas fa-trash"></i>
+                                </div>
+                            </li>
+                            {% endif %}
                         </ul>
                     </div>
                 </ul>                
@@ -26,6 +33,28 @@
 </div>
 
 <script>
+    function deleteComment(commentId, clickedElement) {
+        if (!confirm("Are you sure you want to delete this comment?")) {
+            return; // If the user cancels, do nothing
+        }
+        const url = "/delete-comment/" + commentId;
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            success: function(data) {
+                if (data.success) {
+                    // Remove the post element from the page
+                    location.reload();
+                }
+            },
+            error: function() {
+                // Show an alert if the request fails
+                alert("Failed to delete post. Please try again later.");
+            }
+        });
+    }
+
     function likeComment(commentId, isLiked, clickedElement) {
         const heartIcon = $(clickedElement).find('.heart');
         const likeCountElement = $(clickedElement).find('.like-count');
