@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, abort, jsonify, send_from_directory, redirect, session, url_for
-from database import get_unread_notifications
 from msal import ConfidentialClientApplication
 import os
 import uuid
